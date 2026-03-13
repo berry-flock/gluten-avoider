@@ -1,7 +1,7 @@
 {
-  "name": "food-places-app",
+  "name": "gluten-avoider",
   "version": "1.0.0",
-  "description": "Trusted food places notebook built with Express and SQLite",
+  "description": "Gluten Avoider, a personal notebook for trusted food places",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",

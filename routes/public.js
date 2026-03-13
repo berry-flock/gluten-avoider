@@ -23,7 +23,7 @@ router.get("/", async (req, res, next) => {
     res.render("home", {
       groupedTags: getGroupedTags(availableTags),
       featuredPlaces,
-      pageTitle: "Trusted food places",
+      pageTitle: "Gluten Avoider",
       recentPlaces
     });
   } catch (error) {

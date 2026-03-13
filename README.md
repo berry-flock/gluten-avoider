@@ -1,4 +1,4 @@
-# Trusted Places
+# Gluten Avoider
 
 Personal web app for saving, tagging, browsing, and planning around trusted food venues.
 
