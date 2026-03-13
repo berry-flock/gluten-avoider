@@ -1,0 +1,32 @@
+<article class="place-card">
+  <div class="place-card__top">
+    <div>
+      <h3 class="place-card__title">
+        <a href="/places/<%= place.slug %>"><%= place.name %></a>
+      </h3>
+      <p class="place-card__suburb"><%= place.suburb %></p>
+    </div>
+  </div>
+
+  <div class="place-card__badges">
+    <span class="badge <%= badgeClass('status', place.status) %>"><%= formatStatus(place.status) %></span>
+  </div>
+
+  <% if (place.openSummary) { %>
+    <p class="hours-pill <%= isOpenNowClass(place.openSummary) %>"><%= place.openSummary.label %></p>
+  <% } %>
+
+  <% if (place.tags && place.tags.length) { %>
+    <div class="tag-row">
+      <% place.tags.slice(0, 4).forEach((tag) => { %>
+        <a class="tag-pill tag-pill--link" href="/places?tags=<%= encodeURIComponent(tag.slug) %>"><%= tag.name %></a>
+      <% }) %>
+    </div>
+  <% } %>
+
+  <% if (place.notes_public) { %>
+    <p class="place-card__excerpt"><%= excerpt(place.notes_public, 150) %></p>
+  <% } %>
+
+  <a class="text-link" href="/places/<%= place.slug %>">View details</a>
+</article>

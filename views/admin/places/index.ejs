@@ -1,0 +1,58 @@
+<%- include("../../partials/header") %>
+
+<section class="section-block">
+  <div class="section-heading">
+    <div>
+      <p class="eyebrow">Admin places</p>
+      <h1>Manage places</h1>
+    </div>
+    <div class="admin-actions">
+      <a class="button" href="/admin/places/new">Add place</a>
+      <a class="button button--secondary" href="/admin">Dashboard</a>
+    </div>
+  </div>
+
+  <% if (notice) { %>
+    <p class="form-message form-message--success"><%= notice %></p>
+  <% } %>
+
+  <% if (places.length) { %>
+    <div class="admin-table-wrap">
+      <table class="admin-table">
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Suburb</th>
+            <th>Status</th>
+            <th>Flags</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% places.forEach((place) => { %>
+            <tr>
+              <td>
+                <strong><%= place.name %></strong>
+                <div class="table-subtext">/<%= place.slug %></div>
+              </td>
+              <td><%= place.suburb %></td>
+              <td><%= formatStatus(place.status) %></td>
+              <td>
+                <% if (place.is_public) { %><span class="tag-pill">Public</span><% } else { %><span class="tag-pill">Hidden</span><% } %>
+              </td>
+              <td class="admin-table__actions">
+                <a class="text-link" href="/places/<%= place.slug %>">View</a>
+                <a class="text-link" href="/admin/places/<%= place.id %>/edit">Edit</a>
+                <a class="text-link text-link--danger" href="/admin/places/<%= place.id %>/delete">Delete</a>
+              </td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </div>
+  <% } else { %>
+    <p class="empty-state">No places saved yet.</p>
+  <% } %>
+</section>
+
+<%- include("../../partials/footer") %>

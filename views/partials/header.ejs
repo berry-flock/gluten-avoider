@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title><%= pageTitle %> | Trusted Places</title>
+    <link rel="stylesheet" href="/styles.css" />
+    <%- typeof extraHead !== "undefined" ? extraHead : "" %>
+  </head>
+  <body>
+    <header class="site-header">
+      <div class="shell site-header__inner">
+        <a class="site-title" href="/">Trusted Places</a>
+        <nav class="site-nav">
+          <a href="/places">Browse</a>
+          <a href="/nearby">Nearby now</a>
+          <a href="/plan">Plan later</a>
+          <a href="/map">Map</a>
+          <% if (currentAdmin) { %>
+            <a href="/admin">Admin</a>
+          <% } else { %>
+            <a href="/admin/login">Admin login</a>
+          <% } %>
+        </nav>
+      </div>
+    </header>
+    <main class="shell page-content">

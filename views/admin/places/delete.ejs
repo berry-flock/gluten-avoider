@@ -1,0 +1,16 @@
+<%- include("../../partials/header") %>
+
+<section class="section-block">
+  <p class="eyebrow">Admin places</p>
+  <h1>Delete <%= place.name %>?</h1>
+  <p class="section-copy">This will remove the place, its tag links, and its saved opening hours.</p>
+
+  <div class="admin-actions">
+    <form method="post" action="/admin/places/<%= place.id %>/delete">
+      <button class="button" type="submit">Confirm delete</button>
+    </form>
+    <a class="button button--secondary" href="/admin/places">Cancel</a>
+  </div>
+</section>
+
+<%- include("../../partials/footer") %>

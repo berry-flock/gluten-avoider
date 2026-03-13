@@ -1,0 +1,125 @@
+<%- include("partials/header") %>
+
+<section class="section-block">
+  <div class="section-heading">
+    <div>
+      <p class="eyebrow">Nearby now</p>
+      <h1>Find a good option nearby right now.</h1>
+    </div>
+    <p class="section-copy">Use your current location or enter coordinates manually. Results are sorted by distance first, with trusted places lifting within close distance ranges.</p>
+  </div>
+
+  <form class="filters-panel" method="get" action="/nearby">
+    <div class="form-grid">
+      <div class="nearby-geo-actions">
+        <button class="button button--secondary" type="button" id="nearby-use-location">Use my current location</button>
+      </div>
+
+      <label>
+        Status
+        <select name="status">
+          <option value="">All statuses</option>
+          <% statusValues.forEach((status) => { %>
+            <option value="<%= status %>" <%= filters.status === status ? "selected" : "" %>><%= formatStatus(status) %></option>
+          <% }) %>
+        </select>
+      </label>
+    </div>
+
+    <% if (menuTagGroup) { %>
+      <fieldset class="tag-filter-group tag-filter-group--prominent">
+        <legend>What are we feeling?</legend>
+        <div class="tag-filter-list">
+          <% menuTagGroup.tags.forEach((tag) => { %>
+            <label class="tag-checkbox">
+              <input type="checkbox" name="tags" value="<%= tag.slug %>" <%= hasSelectedTag(filters, tag.slug) ? "checked" : "" %> />
+              <span><%= tag.name %></span>
+            </label>
+          <% }) %>
+        </div>
+      </fieldset>
+    <% } %>
+
+    <details class="nearby-test-fields">
+      <summary>Testing only: enter coordinates manually</summary>
+      <div class="form-grid">
+        <label>
+          Latitude
+          <input type="text" id="nearby-lat-input" name="lat" value="<%= location.latitude ?? "" %>" placeholder="-33.8790" />
+        </label>
+        <label>
+          Longitude
+          <input type="text" id="nearby-lng-input" name="lng" value="<%= location.longitude ?? "" %>" placeholder="151.2067" />
+        </label>
+      </div>
+    </details>
+
+    <div class="filters-actions">
+      <button class="button" type="submit">Find nearby places</button>
+      <a class="button button--secondary" href="/nearby">Reset</a>
+    </div>
+  </form>
+</section>
+
+<% if (!location.hasCoordinates) { %>
+  <section class="section-block">
+    <p class="empty-state">Add a location above to see nearby places sorted by distance.</p>
+  </section>
+<% } else { %>
+  <section class="nearby-layout">
+    <div class="section-block nearby-map-panel">
+      <div class="section-heading">
+        <div>
+          <h2>Map</h2>
+          <p class="section-copy">Current search origin: <%= location.latitude.toFixed(4) %>, <%= location.longitude.toFixed(4) %></p>
+        </div>
+      </div>
+      <div id="nearby-map" class="nearby-map"></div>
+    </div>
+
+    <div class="section-block nearby-results-panel">
+      <div class="section-heading">
+        <div>
+          <h2><%= places.length %> nearby place<%= places.length === 1 ? "" : "s" %></h2>
+          <p class="section-copy">Nearest first, with trusted places lifting within close distance ranges.</p>
+        </div>
+      </div>
+
+      <% if (places.length) { %>
+        <div class="nearby-results-list">
+          <% places.forEach((place) => { %>
+            <%- include("partials/nearby-card", { place, location }) %>
+          <% }) %>
+        </div>
+      <% } else { %>
+        <p class="empty-state">No places matched that nearby search.</p>
+      <% } %>
+    </div>
+  </section>
+<% } %>
+
+<% if (location.hasCoordinates) { %>
+  <script
+    src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+    integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+    crossorigin=""
+  ></script>
+  <script id="nearby-map-data" type="application/json"><%- JSON.stringify({
+    userLocation: {
+      label: location.label,
+      lat: location.latitude,
+      lng: location.longitude
+    },
+    places: places.map((place) => ({
+      lat: Number(place.latitude),
+      lng: Number(place.longitude),
+      name: place.name,
+      slug: place.slug,
+      suburb: place.suburb,
+      distanceKm: Number(place.distance_km.toFixed(1))
+    }))
+  }) %></script>
+<% } %>
+<script src="/nearby.js"></script>
+
+<%- include("partials/footer") %>

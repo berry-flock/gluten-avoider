@@ -1,0 +1,32 @@
+<%- include("../partials/header") %>
+
+<section class="auth-shell">
+  <div class="auth-card">
+    <p class="eyebrow">Private admin</p>
+    <h1>Admin login</h1>
+    <p class="section-copy">Use the single admin account configured in your local `.env` file.</p>
+
+    <% if (flashError) { %>
+      <p class="form-message form-message--error"><%= flashError %></p>
+    <% } %>
+    <% if (typeof errorMessage !== "undefined" && errorMessage) { %>
+      <p class="form-message form-message--error"><%= errorMessage %></p>
+    <% } %>
+
+    <form class="stack-form" method="post" action="/admin/login">
+      <label>
+        Username
+        <input type="text" name="username" value="<%= formData.username %>" autocomplete="username" required />
+      </label>
+
+      <label>
+        Password
+        <input type="password" name="password" autocomplete="current-password" required />
+      </label>
+
+      <button class="button" type="submit">Log in</button>
+    </form>
+  </div>
+</section>
+
+<%- include("../partials/footer") %>

@@ -1,0 +1,86 @@
+<%- include("partials/header") %>
+
+<section class="section-block">
+  <div class="section-heading">
+    <div>
+      <p class="eyebrow">Plan later</p>
+      <h1>Keep good dinner ideas in mind for the weekend.</h1>
+    </div>
+    <p class="section-copy">This view is for future plans rather than what is open right now. Start with what kind of place you want, what food you feel like, and whether it is trusted or still on your list to try.</p>
+  </div>
+
+  <form class="filters-panel" method="get" action="/plan">
+    <% if (categoryTagGroup) { %>
+      <fieldset class="tag-filter-group tag-filter-group--prominent">
+        <legend>What kind of place is it?</legend>
+        <div class="tag-filter-list">
+          <% categoryTagGroup.tags.forEach((tag) => { %>
+            <label class="tag-checkbox">
+              <input type="checkbox" name="tags" value="<%= tag.slug %>" <%= hasSelectedTag(filters, tag.slug) ? "checked" : "" %> />
+              <span><%= tag.name %></span>
+            </label>
+          <% }) %>
+        </div>
+      </fieldset>
+    <% } %>
+
+    <% if (menuTagGroup) { %>
+      <fieldset class="tag-filter-group tag-filter-group--prominent">
+        <legend>What are we feeling?</legend>
+        <div class="tag-filter-list">
+          <% menuTagGroup.tags.forEach((tag) => { %>
+            <label class="tag-checkbox">
+              <input type="checkbox" name="tags" value="<%= tag.slug %>" <%= hasSelectedTag(filters, tag.slug) ? "checked" : "" %> />
+              <span><%= tag.name %></span>
+            </label>
+          <% }) %>
+        </div>
+      </fieldset>
+    <% } %>
+
+    <div class="filters-actions">
+      <button class="button" type="submit">Find ideas</button>
+      <a class="button button--secondary" href="/plan">Reset</a>
+    </div>
+  </form>
+</section>
+
+<section class="section-block">
+  <div class="section-heading">
+    <div>
+      <h2>Your regulars</h2>
+      <p class="section-copy">Trusted places you already know and can plan around confidently.</p>
+    </div>
+  </div>
+
+  <% if (trustedPlaces.length) { %>
+    <div class="card-grid">
+      <% trustedPlaces.forEach((place) => { %>
+        <%- include("partials/plan-card", { place }) %>
+      <% }) %>
+    </div>
+  <% } else { %>
+    <p class="empty-state">No trusted places matched those plan-later filters.</p>
+  <% } %>
+</section>
+
+<section class="section-block">
+  <div class="section-heading">
+    <div>
+      <h2>Somewhere new</h2>
+      <p class="section-copy">Places still on your list to try when you want a new idea.</p>
+    </div>
+  </div>
+
+  <% if (wantToTryPlaces.length) { %>
+    <div class="card-grid">
+      <% wantToTryPlaces.forEach((place) => { %>
+        <%- include("partials/plan-card", { place }) %>
+      <% }) %>
+    </div>
+  <% } else { %>
+    <p class="empty-state">No want-to-try places matched those plan-later filters.</p>
+  <% } %>
+</section>
+
+<%- include("partials/footer") %>

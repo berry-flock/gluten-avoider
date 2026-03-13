@@ -1,0 +1,42 @@
+<%- include("../../partials/header") %>
+
+<section class="section-block">
+  <div class="section-heading">
+    <div>
+      <p class="eyebrow">Admin tags</p>
+      <h1><%= pageTitle %></h1>
+    </div>
+    <a class="button button--secondary" href="/admin/tags">Back to tags</a>
+  </div>
+
+  <form class="stack-form" method="post" action="<%= formAction %>">
+    <label>
+      Tag name
+      <input type="text" name="name" value="<%= formData.name %>" required />
+      <% if (errors.name) { %><span class="field-error"><%= errors.name %></span><% } %>
+    </label>
+
+    <fieldset class="tag-filter-group">
+      <legend>Group</legend>
+      <div class="radio-list">
+        <% tagGroups.forEach((group) => { %>
+          <label class="radio-card">
+            <input type="radio" name="tag_group" value="<%= group.key %>" <%= formData.tag_group === group.key ? "checked" : "" %> />
+            <span>
+              <strong><%= group.label %></strong>
+              <small><%= group.question %></small>
+            </span>
+          </label>
+        <% }) %>
+      </div>
+      <% if (errors.tag_group) { %><span class="field-error"><%= errors.tag_group %></span><% } %>
+    </fieldset>
+
+    <div class="admin-actions">
+      <button class="button" type="submit"><%= submitLabel %></button>
+      <a class="button button--secondary" href="/admin/tags">Cancel</a>
+    </div>
+  </form>
+</section>
+
+<%- include("../../partials/footer") %>

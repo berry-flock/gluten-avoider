@@ -1,0 +1,138 @@
+<%- include("../../partials/header") %>
+
+<section class="section-block">
+  <div class="section-heading">
+    <div>
+      <p class="eyebrow">Admin places</p>
+      <h1><%= pageTitle %></h1>
+    </div>
+    <a class="button button--secondary" href="/admin/places">Back to places</a>
+  </div>
+
+  <form class="stack-form" method="post" action="<%= formAction %>">
+    <section class="geo-panel">
+      <p class="eyebrow">Quick capture</p>
+      <label class="form-grid__full">
+        Apple Maps or Google Maps share link
+        <input type="text" name="share_url" value="<%= formData.share_url %>" placeholder="Paste a map share link to fill missing name, address, and coordinates" />
+        <span class="field-help">Compact share links are fine. The app will follow the redirect and try to pull out the place name and coordinates.</span>
+        <% if (errors.share_url) { %><span class="field-error"><%= errors.share_url %></span><% } %>
+      </label>
+    </section>
+
+    <div class="form-check-row">
+      <label class="checkbox-label">
+        <input type="checkbox" name="is_public" value="1" <%= formData.is_public ? "checked" : "" %> />
+        Public
+      </label>
+    </div>
+
+    <label>
+      Public notes
+      <textarea name="notes_public" rows="5"><%= formData.notes_public %></textarea>
+    </label>
+
+    <label>
+      Private notes
+      <textarea name="notes_private" rows="5"><%= formData.notes_private %></textarea>
+    </label>
+
+    <% groupedTags.forEach((group) => { %>
+      <fieldset class="tag-filter-group tag-filter-group--prominent">
+        <legend><%= group.label %></legend>
+        <p class="section-copy"><%= group.question %></p>
+        <div class="tag-filter-list">
+          <% group.tags.forEach((tag) => { %>
+            <label class="tag-checkbox">
+              <input type="checkbox" name="tag_ids" value="<%= tag.id %>" <%= formData.tag_ids.includes(String(tag.id)) ? "checked" : "" %> />
+              <span><%= tag.name %></span>
+            </label>
+          <% }) %>
+        </div>
+        <label class="form-grid__full">
+          Add new <%= group.label.toLowerCase() %> tags
+          <input type="text" name="new_tags[<%= group.key %>]" value="<%= formData.new_tags[group.key] %>" placeholder="Comma-separated, e.g. rooftop, dumplings" />
+        </label>
+      </fieldset>
+    <% }) %>
+
+    <label>
+      Opening hours
+      <textarea name="opening_hours_text" rows="16"><%= formData.opening_hours_text %></textarea>
+      <span class="field-help">Paste one day and one time line per block. Example: Friday then 4 pm–12 am.</span>
+      <% if (errors.opening_hours_text) { %><span class="field-error"><%= errors.opening_hours_text %></span><% } %>
+    </label>
+
+    <section class="detail-block">
+      <div class="section-heading">
+        <div>
+          <p class="eyebrow">Manual details</p>
+          <h2>Fill these in now or later</h2>
+        </div>
+      </div>
+
+      <div class="form-grid">
+        <label>
+          Name
+          <input type="text" name="name" value="<%= formData.name %>" />
+          <% if (errors.name) { %><span class="field-error"><%= errors.name %></span><% } %>
+        </label>
+
+        <label>
+          Status
+          <select name="status">
+            <% STATUS_VALUES.forEach((status) => { %>
+              <option value="<%= status %>" <%= formData.status === status ? "selected" : "" %>><%= formatStatus(status) %></option>
+            <% }) %>
+          </select>
+          <% if (errors.status) { %><span class="field-error"><%= errors.status %></span><% } %>
+        </label>
+
+        <label class="form-grid__full">
+          Location / address / Plus Code
+          <input type="text" name="address" value="<%= formData.address %>" placeholder="e.g. 4694+3G Haymarket, New South Wales" />
+        </label>
+
+        <label>
+          Suburb
+          <input type="text" name="suburb" value="<%= formData.suburb %>" placeholder="Optional" />
+        </label>
+
+        <label class="form-grid__full">
+          Menu URL
+          <input type="text" name="website_url" value="<%= formData.website_url %>" placeholder="https://..." />
+          <% if (errors.website_url) { %><span class="field-error"><%= errors.website_url %></span><% } %>
+        </label>
+
+        <div class="form-grid__full geo-panel">
+          <div class="geo-panel__copy">
+            <strong>Coordinates</strong>
+            <p class="section-copy">If you are at the venue, use your current location to fill latitude and longitude quickly. Address lookup from coordinates is not automatic yet.</p>
+          </div>
+          <div class="geo-panel__controls">
+            <label>
+              Latitude
+              <input type="text" id="latitude-input" name="latitude" value="<%= formData.latitude %>" placeholder="Optional" />
+              <% if (errors.latitude) { %><span class="field-error"><%= errors.latitude %></span><% } %>
+            </label>
+            <label>
+              Longitude
+              <input type="text" id="longitude-input" name="longitude" value="<%= formData.longitude %>" placeholder="Optional" />
+              <% if (errors.longitude) { %><span class="field-error"><%= errors.longitude %></span><% } %>
+            </label>
+            <button class="button button--secondary" type="button" id="use-current-location">Use current location</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <div class="admin-actions">
+      <button class="button" type="submit"><%= submitLabel %></button>
+      <a class="button button--secondary" href="/admin/places">Cancel</a>
+    </div>
+  </form>
+</section>
+
+<script src="/admin-place-form.js"></script>
+
+<%- include("../../partials/footer") %>

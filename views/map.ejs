@@ -1,0 +1,97 @@
+<%- include("partials/header") %>
+
+<section class="section-block">
+  <div class="section-heading">
+    <div>
+      <p class="eyebrow">Map view</p>
+      <h1>See your saved places on one map.</h1>
+    </div>
+    <p class="section-copy">Use the filters to narrow the marker set by place type, food mood, and trusted vs want-to-try status.</p>
+  </div>
+
+  <form class="filters-panel" method="get" action="/map/view">
+    <div class="form-grid">
+      <label class="form-grid__full">
+        Search
+        <input type="text" name="search" value="<%= filters.search %>" placeholder="Name, suburb, notes, tag" />
+      </label>
+
+      <label>
+        Status
+        <select name="status">
+          <option value="">All statuses</option>
+          <% statusValues.filter((status) => status !== "avoid").forEach((status) => { %>
+            <option value="<%= status %>" <%= filters.status === status ? "selected" : "" %>><%= formatStatus(status) %></option>
+          <% }) %>
+        </select>
+      </label>
+    </div>
+
+    <% groupedTags.forEach((group) => { %>
+      <fieldset class="tag-filter-group tag-filter-group--prominent">
+        <legend><%= group.label === "Menu items" ? "What are we feeling?" : group.label %></legend>
+        <div class="tag-filter-list">
+          <% group.tags.forEach((tag) => { %>
+            <label class="tag-checkbox">
+              <input type="checkbox" name="tags" value="<%= tag.slug %>" <%= hasSelectedTag(filters, tag.slug) ? "checked" : "" %> />
+              <span><%= tag.name %></span>
+            </label>
+          <% }) %>
+        </div>
+      </fieldset>
+    <% }) %>
+
+    <div class="filters-actions">
+      <button class="button" type="submit">Update map</button>
+      <a class="button button--secondary" href="/map/view">Reset</a>
+    </div>
+  </form>
+</section>
+
+<section class="section-block">
+  <div class="section-heading">
+    <div>
+      <h2><%= mappablePlaces.length %> mapped place<%= mappablePlaces.length === 1 ? "" : "s" %></h2>
+      <p class="section-copy"><%= placesWithoutCoordinates %> filtered place<%= placesWithoutCoordinates === 1 ? "" : "s" %> are hidden from the map because they do not have coordinates yet.</p>
+    </div>
+  </div>
+
+  <div id="map-view" class="map-view-canvas"></div>
+</section>
+
+<section class="section-block">
+  <div class="section-heading">
+    <div>
+      <h2>Matching places</h2>
+      <p class="section-copy">The list below matches the marker set shown on the map.</p>
+    </div>
+  </div>
+
+  <% if (mappablePlaces.length) { %>
+    <div class="card-grid">
+      <% mappablePlaces.forEach((place) => { %>
+        <%- include("partials/place-card", { place }) %>
+      <% }) %>
+    </div>
+  <% } else { %>
+    <p class="empty-state">No mapped places matched those filters.</p>
+  <% } %>
+</section>
+
+  <script
+    src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+    integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+    crossorigin=""
+  ></script>
+  <script id="map-view-data" type="application/json"><%- JSON.stringify({
+    places: mappablePlaces.map((place) => ({
+      lat: Number(place.latitude),
+      lng: Number(place.longitude),
+      name: place.name,
+      slug: place.slug,
+      suburb: place.suburb
+    }))
+  }) %></script>
+  <script src="/map-view.js"></script>
+
+<%- include("partials/footer") %>

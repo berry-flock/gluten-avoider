@@ -1,0 +1,89 @@
+<%- include("../partials/header") %>
+
+<section class="section-block">
+  <div class="section-heading">
+    <div>
+      <p class="eyebrow">Browse</p>
+      <h1>Saved places</h1>
+    </div>
+    <p class="section-copy">Tags are a primary way to use the notebook here. Start with tag groups, then refine with search or status filters.</p>
+  </div>
+
+  <form class="filters-panel" method="get" action="/places">
+    <% if (groupedTags.length) { %>
+      <div class="prominent-tag-groups">
+        <% groupedTags.forEach((group) => { %>
+          <fieldset class="tag-filter-group tag-filter-group--prominent">
+            <legend><%= group.label %></legend>
+            <div class="tag-filter-list">
+              <% group.tags.forEach((tag) => { %>
+                <label class="tag-checkbox">
+                  <input type="checkbox" name="tags" value="<%= tag.slug %>" <%= hasSelectedTag(filters, tag.slug) ? "checked" : "" %> />
+                  <span><%= tag.name %></span>
+                </label>
+              <% }) %>
+            </div>
+          </fieldset>
+        <% }) %>
+      </div>
+    <% } %>
+
+    <div class="filters-grid">
+      <label>
+        Search
+        <input type="text" name="search" value="<%= filters.search %>" placeholder="Name, suburb, notes, tag" />
+      </label>
+
+      <label>
+        Status
+        <select name="status">
+          <option value="">All statuses</option>
+          <% statusValues.forEach((status) => { %>
+            <option value="<%= status %>" <%= filters.status === status ? "selected" : "" %>><%= formatStatus(status) %></option>
+          <% }) %>
+        </select>
+      </label>
+
+      <label>
+        Sort
+        <select name="sort">
+          <% sortValues.forEach((value) => { %>
+            <option value="<%= value %>" <%= filters.sort === value ? "selected" : "" %>><%= value.replaceAll("_", " ") %></option>
+          <% }) %>
+        </select>
+      </label>
+    </div>
+
+    <div class="filters-checkbox">
+      <label class="checkbox-label">
+        <input type="checkbox" name="open_now" value="1" <%= filters.openNow ? "checked" : "" %> />
+        Open now
+      </label>
+    </div>
+
+    <p class="filters-hint">Selected tags work together, so you can narrow to combinations like dinner + fried chicken + fancy.</p>
+
+    <div class="filters-actions">
+      <button class="button" type="submit">Apply filters</button>
+      <a class="button button--secondary" href="/places">Reset</a>
+    </div>
+  </form>
+</section>
+
+<section class="section-block">
+  <div class="section-heading">
+    <h2><%= places.length %> public place<%= places.length === 1 ? "" : "s" %></h2>
+  </div>
+
+  <% if (places.length) { %>
+    <div class="card-grid">
+      <% places.forEach((place) => { %>
+        <%- include("../partials/place-card", { place }) %>
+      <% }) %>
+    </div>
+  <% } else { %>
+    <p class="empty-state">No places matched those filters.</p>
+  <% } %>
+</section>
+
+<%- include("../partials/footer") %>
