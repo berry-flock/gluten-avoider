@@ -12,6 +12,15 @@
     <span class="badge <%= badgeClass('status', place.status) %>"><%= formatStatus(place.status) %></span>
   </div>
 
+  <% const menuItems = tagsByGroup(place.tags, "menu_items"); %>
+  <% if (menuItems.length) { %>
+    <p class="place-card__excerpt"><strong>Key menu items:</strong> <%= menuItems.slice(0, 3).map((tag) => tag.name).join(", ") %></p>
+  <% } %>
+
+  <% if (selectedDay !== null && selectedDay !== undefined) { %>
+    <p class="hours-pill hours-pill--closed"><%= dayLabels[selectedDay] %>: <%= formatHoursForDay(place.openingHours, selectedDay) %></p>
+  <% } %>
+
   <% if (place.tags && place.tags.length) { %>
     <div class="tag-row">
       <% place.tags.slice(0, 6).forEach((tag) => { %>

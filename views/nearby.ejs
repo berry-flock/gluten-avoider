@@ -4,9 +4,9 @@
   <div class="section-heading">
     <div>
       <p class="eyebrow">Nearby now</p>
-      <h1>Find a good option nearby right now.</h1>
+      <h1>Take the pressure out of choosing.</h1>
     </div>
-    <p class="section-copy">Use your current location or enter coordinates manually. Results are sorted by distance first, with trusted places lifting within close distance ranges.</p>
+    <p class="section-copy">This page only shows places that are open now. Trusted places rise to the top, and menu items help you decide quickly.</p>
   </div>
 
   <form class="filters-panel" method="get" action="/nearby">
@@ -14,17 +14,9 @@
       <div class="nearby-geo-actions">
         <button class="button button--secondary" type="button" id="nearby-use-location">Use my current location</button>
       </div>
-
-      <label>
-        Status
-        <select name="status">
-          <option value="">All statuses</option>
-          <% statusValues.forEach((status) => { %>
-            <option value="<%= status %>" <%= filters.status === status ? "selected" : "" %>><%= formatStatus(status) %></option>
-          <% }) %>
-        </select>
-      </label>
     </div>
+
+    <p class="field-help" id="nearby-location-help">On a live site, browser location works best over HTTPS.</p>
 
     <% if (menuTagGroup) { %>
       <fieldset class="tag-filter-group tag-filter-group--prominent">
@@ -55,7 +47,7 @@
     </details>
 
     <div class="filters-actions">
-      <button class="button" type="submit">Find nearby places</button>
+      <button class="button" type="submit">Show nearby places</button>
       <a class="button button--secondary" href="/nearby">Reset</a>
     </div>
   </form>
@@ -63,25 +55,15 @@
 
 <% if (!location.hasCoordinates) { %>
   <section class="section-block">
-    <p class="empty-state">Add a location above to see nearby places sorted by distance.</p>
+    <p class="empty-state">Trying to get your current location. If nothing happens, use the button above or the testing coordinates section.</p>
   </section>
 <% } else { %>
   <section class="nearby-layout">
-    <div class="section-block nearby-map-panel">
-      <div class="section-heading">
-        <div>
-          <h2>Map</h2>
-          <p class="section-copy">Current search origin: <%= location.latitude.toFixed(4) %>, <%= location.longitude.toFixed(4) %></p>
-        </div>
-      </div>
-      <div id="nearby-map" class="nearby-map"></div>
-    </div>
-
     <div class="section-block nearby-results-panel">
       <div class="section-heading">
         <div>
           <h2><%= places.length %> nearby place<%= places.length === 1 ? "" : "s" %></h2>
-          <p class="section-copy">Nearest first, with trusted places lifting within close distance ranges.</p>
+          <p class="section-copy">Open now and sorted by proximity, with trusted places first when distances are similar.</p>
         </div>
       </div>
 
@@ -92,8 +74,18 @@
           <% }) %>
         </div>
       <% } else { %>
-        <p class="empty-state">No places matched that nearby search.</p>
+        <p class="empty-state">No nearby places matched that search right now.</p>
       <% } %>
+    </div>
+
+    <div class="section-block nearby-map-panel">
+      <div class="section-heading">
+        <div>
+          <h2>Map</h2>
+          <p class="section-copy">Current search origin: <%= location.latitude.toFixed(4) %>, <%= location.longitude.toFixed(4) %></p>
+        </div>
+      </div>
+      <div id="nearby-map" class="nearby-map"></div>
     </div>
   </section>
 <% } %>
@@ -106,7 +98,6 @@
   ></script>
   <script id="nearby-map-data" type="application/json"><%- JSON.stringify({
     userLocation: {
-      label: location.label,
       lat: location.latitude,
       lng: location.longitude
     },

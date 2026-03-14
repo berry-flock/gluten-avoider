@@ -1,11 +1,21 @@
 const nearbyLocationButton = document.getElementById("nearby-use-location");
 const nearbyLatInput = document.getElementById("nearby-lat-input");
 const nearbyLngInput = document.getElementById("nearby-lng-input");
+const nearbyLocationHelp = document.getElementById("nearby-location-help");
+
+function geolocationNeedsHttps() {
+  return !window.isSecureContext && window.location.hostname !== "localhost" && window.location.hostname !== "127.0.0.1";
+}
 
 if (nearbyLocationButton && nearbyLatInput && nearbyLngInput) {
   nearbyLocationButton.addEventListener("click", () => {
     if (!navigator.geolocation) {
       window.alert("Geolocation is not available in this browser.");
+      return;
+    }
+
+    if (geolocationNeedsHttps()) {
+      window.alert("Current location on the live site needs HTTPS. It will work once the domain has SSL.");
       return;
     }
 
@@ -18,6 +28,7 @@ if (nearbyLocationButton && nearbyLatInput && nearbyLngInput) {
         nearbyLngInput.value = position.coords.longitude.toFixed(6);
         nearbyLocationButton.disabled = false;
         nearbyLocationButton.textContent = "Use my current location";
+        nearbyLatInput.form.submit();
       },
       () => {
         window.alert("Could not get your current location.");
@@ -32,7 +43,18 @@ if (nearbyLocationButton && nearbyLatInput && nearbyLngInput) {
   });
 }
 
-if (nearbyLatInput && nearbyLngInput && !nearbyLatInput.value && !nearbyLngInput.value && navigator.geolocation) {
+if (nearbyLocationHelp && geolocationNeedsHttps()) {
+  nearbyLocationHelp.textContent = "Current location on the live site needs HTTPS. For now, use testing coordinates or add a domain with SSL.";
+}
+
+if (
+  nearbyLatInput
+  && nearbyLngInput
+  && !nearbyLatInput.value
+  && !nearbyLngInput.value
+  && navigator.geolocation
+  && !geolocationNeedsHttps()
+) {
   const alreadyTried = window.sessionStorage.getItem("nearby-autolocate-attempted");
 
   if (!alreadyTried) {

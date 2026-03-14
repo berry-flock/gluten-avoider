@@ -1,4 +1,4 @@
-const { DAY_LABELS, formatHoursRange } = require("./opening-hours");
+const { DAY_LABELS, formatHoursForDay, formatHoursRange } = require("./opening-hours");
 
 function installViewHelpers(app) {
   app.locals.currentYear = new Date().getFullYear();
@@ -6,10 +6,14 @@ function installViewHelpers(app) {
   app.locals.formatConfidence = formatConfidence;
   app.locals.excerpt = excerpt;
   app.locals.badgeClass = badgeClass;
+  app.locals.buildAppleMapsUrl = buildAppleMapsUrl;
+  app.locals.buildGoogleMapsUrl = buildGoogleMapsUrl;
   app.locals.dayLabels = DAY_LABELS;
+  app.locals.formatHoursForDay = formatHoursForDay;
   app.locals.formatHoursRange = formatHoursRange;
   app.locals.hasSelectedTag = hasSelectedTag;
   app.locals.isOpenNowClass = isOpenNowClass;
+  app.locals.tagsByGroup = tagsByGroup;
 }
 
 function formatStatus(status) {
@@ -47,6 +51,26 @@ function hasSelectedTag(filters, slug) {
 
 function isOpenNowClass(openSummary) {
   return openSummary && openSummary.isOpen ? "hours-pill--open" : "hours-pill--closed";
+}
+
+function tagsByGroup(tags, groupKey) {
+  return (tags || []).filter((tag) => (tag.tag_group || "category") === groupKey);
+}
+
+function buildAppleMapsUrl(place) {
+  if (place.latitude !== null && place.latitude !== "" && place.longitude !== null && place.longitude !== "") {
+    return `https://maps.apple.com/?ll=${encodeURIComponent(place.latitude)},${encodeURIComponent(place.longitude)}&q=${encodeURIComponent(place.name || place.address || "Location")}`;
+  }
+
+  return `https://maps.apple.com/?q=${encodeURIComponent(place.address || place.name || "Location")}`;
+}
+
+function buildGoogleMapsUrl(place) {
+  if (place.latitude !== null && place.latitude !== "" && place.longitude !== null && place.longitude !== "") {
+    return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${place.latitude},${place.longitude}`)}`;
+  }
+
+  return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(place.address || place.name || "Location")}`;
 }
 
 module.exports = {

@@ -1,77 +1,74 @@
 <%- include("partials/header") %>
 
-<section class="hero">
-  <div class="hero__copy">
+<section class="home-header">
+  <div>
     <p class="eyebrow">Gluten Avoider</p>
-    <h1>Keep track of the food places you trust.</h1>
-    <p class="hero__text">
-      This app is built for two simple questions: what is a good option nearby right now, and what is worth keeping in mind for later.
-    </p>
-    <div class="hero__actions">
-      <a class="button" href="/places">Browse all places</a>
-      <a class="button button--secondary" href="/nearby">Nearby now</a>
-      <a class="button button--secondary" href="/plan">Plan later</a>
-      <a class="button button--secondary" href="/map">Map view</a>
-      <% if (currentAdmin) { %>
-        <a class="button" href="/admin/places/new">Add new place</a>
-      <% } %>
-    </div>
-  </div>
-</section>
-
-<% if (currentAdmin) { %>
-  <section class="section-block">
-    <div class="section-heading">
-      <div>
-        <p class="eyebrow">Admin shortcuts</p>
-        <h2>Add or update places quickly</h2>
-      </div>
-    </div>
-    <div class="admin-actions">
-      <a class="button" href="/admin/places/new">Add new place</a>
-      <a class="button button--secondary" href="/admin">Open admin dashboard</a>
-    </div>
-  </section>
-<% } %>
-
-<section class="section-block section-block--tag-focus">
-  <div class="section-heading">
-    <div>
-      <p class="eyebrow">Browse by tags</p>
-      <h2>Use tags as a fast way to explore.</h2>
-    </div>
-    <p class="section-copy">Nearby now and plan later will be the main workflows. Tags are the next fastest way to narrow to the right kind of place.</p>
+    <h1 class="home-header__title">A simple springboard for deciding where to eat.</h1>
+    <p class="section-copy">Use nearby now when you need an answer quickly. Use plan later when you are making dinner plans for the weekend.</p>
   </div>
 
-  <div class="tag-group-grid">
-    <% groupedTags.forEach((group) => { %>
-      <section class="tag-group-card">
-        <h3><%= group.label %></h3>
-        <div class="tag-row">
-          <% group.tags.forEach((tag) => { %>
-            <a class="tag-pill tag-pill--link tag-pill--large" href="/places?tags=<%= encodeURIComponent(tag.slug) %>"><%= tag.name %></a>
-          <% }) %>
-        </div>
-      </section>
-    <% }) %>
-  </div>
-</section>
-
-<section class="section-block">
-  <div class="section-heading">
-    <h2>Recently updated</h2>
-    <a class="text-link" href="/places?sort=recently_updated">See all</a>
-  </div>
-
-  <% if (recentPlaces.length) { %>
-    <div class="card-grid">
-      <% recentPlaces.forEach((place) => { %>
-        <%- include("partials/place-card", { place }) %>
-      <% }) %>
-    </div>
-  <% } else { %>
-    <p class="empty-state">No places saved yet.</p>
+  <% if (currentAdmin) { %>
+    <a class="button" href="/admin/places/new">Add new restaurant</a>
   <% } %>
 </section>
+
+<div class="home-module-grid">
+  <section class="section-block home-module">
+    <div class="section-heading">
+      <div>
+        <p class="eyebrow">Nearby now</p>
+        <h2><a class="module-link" href="/nearby">Nearby now</a></h2>
+      </div>
+    </div>
+
+    <div id="home-nearby-preview">
+      <p class="empty-state">Trying to find your location to show the closest trusted places that are open now.</p>
+    </div>
+  </section>
+
+  <section class="section-block home-module">
+    <div class="section-heading">
+      <div>
+        <p class="eyebrow">Plan later</p>
+        <h2><a class="module-link" href="/plan">Plan later</a></h2>
+      </div>
+    </div>
+
+    <form class="compact-search-form" method="get" action="/places">
+      <label class="sr-only" for="home-search">Search places</label>
+      <input id="home-search" type="text" name="search" placeholder="Search places, suburbs, or notes" />
+      <button class="button" type="submit">Search</button>
+    </form>
+
+    <% if (planPreviewPlaces.length) { %>
+      <div class="home-preview-list">
+        <% planPreviewPlaces.forEach((place) => { %>
+          <%- include("partials/plan-card", { place, selectedDay: null }) %>
+        <% }) %>
+      </div>
+    <% } else { %>
+      <p class="empty-state">No want-to-try places saved yet.</p>
+    <% } %>
+  </section>
+
+  <section class="section-block home-module home-module--map">
+    <div class="section-heading">
+      <div>
+        <p class="eyebrow">Map</p>
+        <h2><a class="module-link" href="/map">Map view</a></h2>
+      </div>
+    </div>
+
+    <div id="home-map" class="nearby-map"></div>
+    <p id="home-map-message" class="section-copy">Trying to center the map on your current location.</p>
+  </section>
+</div>
+
+<script
+  src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+  integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+  crossorigin=""
+></script>
+<script src="/home.js"></script>
 
 <%- include("partials/footer") %>

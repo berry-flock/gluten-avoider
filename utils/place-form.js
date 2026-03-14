@@ -21,7 +21,9 @@ function buildPlaceFormData(place = {}) {
     notes_private: place.notes_private || "",
     notes_public: place.notes_public || "",
     opening_hours: normalizeOpeningHours(place.opening_hours || []),
-    opening_hours_text: formatOpeningHoursText(place.opening_hours || []),
+    opening_hours_text: place.opening_hours && place.opening_hours.length
+      ? formatOpeningHoursText(place.opening_hours || [])
+      : "",
     share_url: "",
     status: place.status || "trusted",
     suburb: place.suburb || "",
@@ -106,6 +108,12 @@ function parseOpeningHoursText(value) {
     .map((line) => line.trim())
     .filter((line) => line && !/^[\uE000-\uF8FF]+$/.test(line));
 
+  if (!lines.length) {
+    return {
+      opening_hours: []
+    };
+  }
+
   const byDay = new Map();
   let index = 0;
 
@@ -117,13 +125,26 @@ function parseOpeningHoursText(value) {
       return { error: `Could not read day name from "${dayLine}".` };
     }
 
-    const nextLine = lines[index + 1];
+    const hourLines = [];
+    let nextIndex = index + 1;
 
-    if (!nextLine) {
+    while (nextIndex < lines.length) {
+      const nextLine = lines[nextIndex];
+      const nextDayIndex = DAY_LABELS.findIndex((day) => day.toLowerCase() === nextLine.toLowerCase());
+
+      if (nextDayIndex !== -1) {
+        break;
+      }
+
+      hourLines.push(nextLine);
+      nextIndex += 1;
+    }
+
+    if (!hourLines.length) {
       return { error: `Missing hours for ${dayLine}.` };
     }
 
-    const parsedRange = parseHoursRange(nextLine);
+    const parsedRange = parseHoursLines(hourLines);
 
     if (parsedRange.error) {
       return { error: `${dayLine}: ${parsedRange.error}` };
@@ -136,7 +157,7 @@ function parseOpeningHoursText(value) {
       is_closed: parsedRange.is_closed
     });
 
-    index += 2;
+    index = nextIndex;
   }
 
   return {
@@ -146,6 +167,33 @@ function parseOpeningHoursText(value) {
       close_time: "",
       is_closed: true
     })
+  };
+}
+
+function parseHoursLines(lines) {
+  const normalizedLines = lines
+    .map((line) => line.replace(/\u202f/g, " ").trim())
+    .filter(Boolean);
+
+  if (normalizedLines.length === 1) {
+    return parseHoursRange(normalizedLines[0]);
+  }
+
+  if (normalizedLines.some((line) => /^closed$/i.test(line))) {
+    return { error: "Use either Closed or one or more opening ranges." };
+  }
+
+  const parsedRanges = normalizedLines.map((line) => parseHoursRange(line));
+  const rangeError = parsedRanges.find((parsedRange) => parsedRange.error);
+
+  if (rangeError) {
+    return rangeError;
+  }
+
+  return {
+    close_time: parsedRanges[parsedRanges.length - 1].close_time,
+    is_closed: false,
+    open_time: parsedRanges[0].open_time
   };
 }
 

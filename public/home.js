@@ -1,0 +1,102 @@
+const nearbyPreviewElement = document.getElementById("home-nearby-preview");
+const mapElement = document.getElementById("home-map");
+const mapMessageElement = document.getElementById("home-map-message");
+
+if (nearbyPreviewElement && mapElement) {
+  if (!navigator.geolocation) {
+    renderGeolocationUnavailable();
+  } else if (!window.isSecureContext && window.location.hostname !== "localhost" && window.location.hostname !== "127.0.0.1") {
+    renderGeolocationUnavailable("Current location on the live site needs HTTPS. Once the domain has SSL, this preview will auto-load.");
+  } else {
+    navigator.geolocation.getCurrentPosition(
+      async (position) => {
+        const latitude = position.coords.latitude.toFixed(6);
+        const longitude = position.coords.longitude.toFixed(6);
+
+        try {
+          const response = await fetch(`/home/preview-data?lat=${encodeURIComponent(latitude)}&lng=${encodeURIComponent(longitude)}`);
+          const payload = await response.json();
+
+          renderNearbyPreview(payload.nearbyPlaces);
+          renderHomeMap(payload);
+        } catch (error) {
+          renderGeolocationUnavailable("Could not load the homepage previews right now.");
+        }
+      },
+      () => {
+        renderGeolocationUnavailable("Location access was declined, so the live nearby preview is hidden for now.");
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 10000
+      }
+    );
+  }
+}
+
+function renderGeolocationUnavailable(message = "Location preview is not available in this browser.") {
+  nearbyPreviewElement.innerHTML = `<p class="empty-state">${escapeHtml(message)}</p>`;
+  mapMessageElement.textContent = message;
+}
+
+function renderNearbyPreview(places) {
+  if (!places.length) {
+    nearbyPreviewElement.innerHTML = '<p class="empty-state">No trusted places nearby are open right now.</p>';
+    return;
+  }
+
+  nearbyPreviewElement.innerHTML = places.map((place) => `
+    <article class="place-card place-card--compact">
+      <div class="place-card__top">
+        <div>
+          <h3 class="place-card__title"><a href="/places/${encodeURIComponent(place.slug)}">${escapeHtml(place.name)}</a></h3>
+          <p class="place-card__suburb">${escapeHtml(place.suburb || "")}</p>
+        </div>
+      </div>
+      ${place.openSummary ? `<p class="hours-pill ${place.openSummary.isOpen ? "hours-pill--open" : "hours-pill--closed"}">${escapeHtml(place.openSummary.label)}</p>` : ""}
+      ${place.menuItems.length ? `<p class="place-card__excerpt"><strong>Featured menu items:</strong> ${escapeHtml(place.menuItems.map((tag) => tag.name).join(", "))}</p>` : ""}
+      <div class="card-inline-links">
+        <a class="text-link" href="/places/${encodeURIComponent(place.slug)}">Open place page</a>
+        ${place.menuUrl ? `<a class="text-link" href="${escapeHtml(place.menuUrl)}" target="_blank" rel="noreferrer">Menu</a>` : ""}
+      </div>
+    </article>
+  `).join("");
+}
+
+function renderHomeMap(payload) {
+  if (!window.L || !payload.hasCoordinates) {
+    mapMessageElement.textContent = "Could not center the map on your location.";
+    return;
+  }
+
+  const map = window.L.map("home-map");
+
+  window.L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+    attribution: "&copy; OpenStreetMap contributors"
+  }).addTo(map);
+
+  const userLatLng = [payload.location.latitude, payload.location.longitude];
+  const bounds = [userLatLng];
+
+  window.L.marker(userLatLng)
+    .addTo(map)
+    .bindPopup("You are here");
+
+  payload.mapPlaces.forEach((place) => {
+    const marker = window.L.marker([place.lat, place.lng]).addTo(map);
+    marker.bindPopup(`<strong>${escapeHtml(place.name)}</strong><br>${escapeHtml(place.suburb || "")}<br><a href="/places/${encodeURIComponent(place.slug)}">View details</a>`);
+    bounds.push([place.lat, place.lng]);
+  });
+
+  map.fitBounds(bounds, { padding: [24, 24], maxZoom: 14 });
+  mapMessageElement.textContent = "Showing saved places around your current location.";
+}
+
+function escapeHtml(value) {
+  return String(value)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}

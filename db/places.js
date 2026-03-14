@@ -6,6 +6,7 @@ const { haversineDistanceKm } = require("../utils/distance");
 const STATUS_VALUES = ["trusted", "want_to_try", "avoid"];
 const CONFIDENCE_VALUES = ["strong", "partial", "uncertain", "unknown"];
 const SORT_VALUES = ["recommended", "alphabetical", "recently_updated", "featured"];
+const PLAN_STATUS_VALUES = ["all", "trusted", "want_to_try"];
 
 function normalizeFilters(rawQuery = {}) {
   const search = typeof rawQuery.search === "string" ? rawQuery.search.trim() : "";
@@ -30,40 +31,19 @@ function normalizeFilters(rawQuery = {}) {
 }
 
 async function getHomepageData() {
-  const featuredPlaces = await all(
+  const planPreviewPlaces = await all(
     `SELECT p.*
      FROM places p
-     WHERE p.is_public = 1 AND p.status != 'avoid' AND p.featured = 1
+     WHERE p.is_public = 1 AND p.status = 'want_to_try'
      ORDER BY
-       CASE p.status
-         WHEN 'trusted' THEN 1
-         WHEN 'want_to_try' THEN 2
-         ELSE 3
-       END,
-       CASE p.gf_confidence
-         WHEN 'strong' THEN 1
-         WHEN 'partial' THEN 2
-         WHEN 'uncertain' THEN 3
-         ELSE 4
-       END,
        datetime(p.updated_at) DESC
-     LIMIT 4`
+     LIMIT 3`
   );
 
-  const recentPlaces = await all(
-    `SELECT p.*
-     FROM places p
-     WHERE p.is_public = 1 AND p.status != 'avoid'
-     ORDER BY datetime(p.updated_at) DESC
-     LIMIT 6`
-  );
+  await attachTags(planPreviewPlaces);
+  await attachOpeningHours(planPreviewPlaces);
 
-  await attachTags(featuredPlaces);
-  await attachTags(recentPlaces);
-  await attachOpeningHours(featuredPlaces);
-  await attachOpeningHours(recentPlaces);
-
-  return { featuredPlaces, recentPlaces };
+  return { planPreviewPlaces };
 }
 
 async function listPublicPlaces(rawQuery = {}) {
@@ -124,12 +104,7 @@ async function listNearbyPlaces(rawQuery = {}) {
 }
 
 async function listPlanPlaces(rawQuery = {}) {
-  const filters = {
-    ...normalizeFilters(rawQuery),
-    featuredOnly: false,
-    openNow: false,
-    sort: "recommended"
-  };
+  const filters = normalizePlanFilters(rawQuery);
 
   const places = await queryPublicPlaces(filters, getPlanOrderByClause());
 
@@ -139,6 +114,57 @@ async function listPlanPlaces(rawQuery = {}) {
   return {
     filters,
     places
+  };
+}
+
+async function getHomePreviewData(rawQuery = {}) {
+  const location = normalizeLocation(rawQuery);
+
+  if (!location.hasCoordinates) {
+    return {
+      location,
+      mapPlaces: [],
+      nearbyPlaces: []
+    };
+  }
+
+  const nearbyPlaces = (await listNearbyPlaces({
+    lat: location.latitude,
+    lng: location.longitude,
+    status: "trusted"
+  })).places.slice(0, 3);
+
+  const allPlaces = await queryPublicPlaces({
+    featuredOnly: false,
+    gfConfidence: "",
+    openNow: false,
+    search: "",
+    sort: "recommended",
+    status: "",
+    tags: []
+  }, getOrderByClause("recommended"));
+
+  await attachTags(allPlaces);
+  await attachOpeningHours(allPlaces);
+
+  const mapPlaces = allPlaces
+    .filter((place) => hasCoordinates(place))
+    .map((place) => ({
+      ...place,
+      distance_km: haversineDistanceKm(
+        location.latitude,
+        location.longitude,
+        Number(place.latitude),
+        Number(place.longitude)
+      )
+    }))
+    .sort((left, right) => left.distance_km - right.distance_km)
+    .slice(0, 12);
+
+  return {
+    location,
+    mapPlaces,
+    nearbyPlaces
   };
 }
 
@@ -377,14 +403,32 @@ function normalizeArray(value) {
     .filter(Boolean);
 }
 
+function normalizePlanFilters(rawQuery = {}) {
+  const baseFilters = normalizeFilters(rawQuery);
+  const day = Number.isInteger(Number(rawQuery.day)) && Number(rawQuery.day) >= 0 && Number(rawQuery.day) <= 6
+    ? Number(rawQuery.day)
+    : 6;
+  const statusPreference = PLAN_STATUS_VALUES.includes(rawQuery.status_preference)
+    ? rawQuery.status_preference
+    : "all";
+
+  return {
+    ...baseFilters,
+    day,
+    featuredOnly: false,
+    openNow: false,
+    sort: "recommended",
+    status: statusPreference === "all" ? "" : statusPreference,
+    statusPreference
+  };
+}
+
 function normalizeLocation(rawQuery = {}) {
   const latitude = parseCoordinate(rawQuery.lat);
   const longitude = parseCoordinate(rawQuery.lng);
-  const label = typeof rawQuery.location_label === "string" ? rawQuery.location_label.trim() : "";
 
   return {
     hasCoordinates: latitude !== null && longitude !== null,
-    label,
     latitude,
     longitude
   };
@@ -415,10 +459,6 @@ function compareNearbyPlaces(left, right) {
     return distanceDifference;
   }
 
-  if (left.featured !== right.featured) {
-    return right.featured - left.featured;
-  }
-
   const statusDifference = statusRank(left.status) - statusRank(right.status);
 
   if (statusDifference !== 0) {
@@ -440,6 +480,8 @@ module.exports = {
   CONFIDENCE_VALUES,
   SORT_VALUES,
   STATUS_VALUES,
+  PLAN_STATUS_VALUES,
+  getHomePreviewData,
   getHomepageData,
   listPlanPlaces,
   getPublicPlaceBySlug,

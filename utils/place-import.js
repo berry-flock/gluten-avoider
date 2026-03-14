@@ -48,54 +48,107 @@ async function enrichPlaceFormFromShareLink(formData) {
 
 function extractPlaceData(url, responseText = "") {
   if (url.hostname.includes("apple.com")) {
-    return enrichWithMetadata(extractAppleMapsData(url), responseText);
+    return enrichWithMetadata(extractAppleMapsData(url, responseText), responseText);
   }
 
   if (url.hostname.includes("google")) {
-    return enrichWithMetadata(extractGoogleMapsData(url), responseText);
+    return enrichWithMetadata(extractGoogleMapsData(url, responseText), responseText);
   }
 
   return emptyImportResult();
 }
 
-function extractAppleMapsData(url) {
-  const ll = url.searchParams.get("ll") || url.searchParams.get("sll") || "";
+function extractAppleMapsData(url, responseText = "") {
+  const coordinatePair = findCoordinatePair([
+    url.searchParams.get("ll"),
+    url.searchParams.get("sll"),
+    url.searchParams.get("near"),
+    url.searchParams.get("address"),
+    url.toString(),
+    responseText
+  ]);
   const query = url.searchParams.get("q") || "";
   const address = url.searchParams.get("address") || "";
-  const [latitude, longitude] = parseCoordinatePair(ll);
 
   return {
     address: streetAddressFromAddress(address),
-    latitude,
-    longitude,
+    latitude: coordinatePair[0],
+    longitude: coordinatePair[1],
     name: query && query !== address ? query : "",
     suburb: suburbFromAddress(address || query)
   };
 }
 
-function extractGoogleMapsData(url) {
+function extractGoogleMapsData(url, responseText = "") {
   const pathMatch = url.pathname.match(/\/maps\/place\/([^/]+)/) || url.pathname.match(/\/place\/([^/]+)/);
-  const atMatch = url.pathname.match(/@(-?\d+(?:\.\d+)?),(-?\d+(?:\.\d+)?)/);
   const queryValue = url.searchParams.get("q") || url.searchParams.get("query") || "";
-  const [queryLat, queryLng] = parseCoordinatePair(queryValue);
+  const coordinatePair = findCoordinatePair([
+    url.pathname,
+    url.search,
+    queryValue,
+    url.toString(),
+    responseText
+  ]);
 
   return {
     address: "",
-    latitude: atMatch ? Number(atMatch[1]) : queryLat,
-    longitude: atMatch ? Number(atMatch[2]) : queryLng,
+    latitude: coordinatePair[0],
+    longitude: coordinatePair[1],
     name: pathMatch ? decodeURIComponent(pathMatch[1]).replace(/\+/g, " ") : "",
     suburb: ""
   };
 }
 
-function parseCoordinatePair(value) {
-  const match = String(value).match(/(-?\d+(?:\.\d+)?),\s*(-?\d+(?:\.\d+)?)/);
+function findCoordinatePair(sources) {
+  for (const source of sources) {
+    const pair = parseCoordinatePair(source);
+    if (pair[0] !== null && pair[1] !== null) {
+      return pair;
+    }
+  }
 
-  if (!match) {
+  return [null, null];
+}
+
+function parseCoordinatePair(value) {
+  const source = String(value || "");
+
+  if (!source) {
     return [null, null];
   }
 
-  return [Number(match[1]), Number(match[2])];
+  const patterns = [
+    /@(-?\d{1,2}\.\d+),(-?\d{1,3}\.\d+)/,
+    /(?:ll|sll|center|near|coordinate)=(-?\d{1,2}\.\d+),\s*(-?\d{1,3}\.\d+)/i,
+    /(-?\d{1,2}\.\d+),\s*(-?\d{1,3}\.\d+)/
+  ];
+
+  for (const pattern of patterns) {
+    const match = source.match(pattern);
+    if (!match) {
+      continue;
+    }
+
+    const latitude = Number(match[1]);
+    const longitude = Number(match[2]);
+
+    if (isValidCoordinatePair(latitude, longitude)) {
+      return [latitude, longitude];
+    }
+  }
+
+  return [null, null];
+}
+
+function isValidCoordinatePair(latitude, longitude) {
+  return (
+    Number.isFinite(latitude)
+    && Number.isFinite(longitude)
+    && latitude >= -90
+    && latitude <= 90
+    && longitude >= -180
+    && longitude <= 180
+  );
 }
 
 function suburbFromAddress(value) {

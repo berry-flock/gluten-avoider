@@ -4,15 +4,26 @@
   <div class="section-heading">
     <div>
       <p class="eyebrow">Plan later</p>
-      <h1>Keep good dinner ideas in mind for the weekend.</h1>
+      <h1>Make dinner plans without overthinking it.</h1>
     </div>
-    <p class="section-copy">This view is for future plans rather than what is open right now. Start with what kind of place you want, what food you feel like, and whether it is trusted or still on your list to try.</p>
+    <p class="section-copy">Start with the day, the kind of night, and what food sounds good. Then decide whether you want a reliable regular or somewhere new.</p>
   </div>
 
   <form class="filters-panel" method="get" action="/plan">
+    <div class="filters-grid">
+      <label>
+        What day are you dining?
+        <select name="day">
+          <% dayLabels.forEach((dayLabel, dayIndex) => { %>
+            <option value="<%= dayIndex %>" <%= filters.day === dayIndex ? "selected" : "" %>><%= dayLabel %></option>
+          <% }) %>
+        </select>
+      </label>
+    </div>
+
     <% if (categoryTagGroup) { %>
       <fieldset class="tag-filter-group tag-filter-group--prominent">
-        <legend>What kind of place is it?</legend>
+        <legend>What’s the occasion?</legend>
         <div class="tag-filter-list">
           <% categoryTagGroup.tags.forEach((tag) => { %>
             <label class="tag-checkbox">
@@ -38,6 +49,18 @@
       </fieldset>
     <% } %>
 
+    <fieldset class="tag-filter-group tag-filter-group--prominent">
+      <legend>Do you want a regular or somewhere new?</legend>
+      <div class="tag-filter-list">
+        <% planStatusValues.forEach((value) => { %>
+          <label class="tag-checkbox">
+            <input type="radio" name="status_preference" value="<%= value %>" <%= filters.statusPreference === value ? "checked" : "" %> />
+            <span><%= value === "all" ? "Show both" : (value === "trusted" ? "Your regulars" : "Somewhere new") %></span>
+          </label>
+        <% }) %>
+      </div>
+    </fieldset>
+
     <div class="filters-actions">
       <button class="button" type="submit">Find ideas</button>
       <a class="button button--secondary" href="/plan">Reset</a>
@@ -45,42 +68,46 @@
   </form>
 </section>
 
-<section class="section-block">
-  <div class="section-heading">
-    <div>
-      <h2>Your regulars</h2>
-      <p class="section-copy">Trusted places you already know and can plan around confidently.</p>
+<% if (filters.statusPreference !== "want_to_try") { %>
+  <section class="section-block">
+    <div class="section-heading">
+      <div>
+        <h2>Your regulars</h2>
+        <p class="section-copy">Trusted places you already know and can plan around.</p>
+      </div>
     </div>
-  </div>
 
-  <% if (trustedPlaces.length) { %>
-    <div class="card-grid">
-      <% trustedPlaces.forEach((place) => { %>
-        <%- include("partials/plan-card", { place }) %>
-      <% }) %>
-    </div>
-  <% } else { %>
-    <p class="empty-state">No trusted places matched those plan-later filters.</p>
-  <% } %>
-</section>
+    <% if (trustedPlaces.length) { %>
+      <div class="card-grid">
+        <% trustedPlaces.forEach((place) => { %>
+          <%- include("partials/plan-card", { place, selectedDay: filters.day }) %>
+        <% }) %>
+      </div>
+    <% } else { %>
+      <p class="empty-state">No trusted places matched those plan filters.</p>
+    <% } %>
+  </section>
+<% } %>
 
-<section class="section-block">
-  <div class="section-heading">
-    <div>
-      <h2>Somewhere new</h2>
-      <p class="section-copy">Places still on your list to try when you want a new idea.</p>
+<% if (filters.statusPreference !== "trusted") { %>
+  <section class="section-block">
+    <div class="section-heading">
+      <div>
+        <h2>Somewhere new</h2>
+        <p class="section-copy">Places still on your list to try for that next dinner plan.</p>
+      </div>
     </div>
-  </div>
 
-  <% if (wantToTryPlaces.length) { %>
-    <div class="card-grid">
-      <% wantToTryPlaces.forEach((place) => { %>
-        <%- include("partials/plan-card", { place }) %>
-      <% }) %>
-    </div>
-  <% } else { %>
-    <p class="empty-state">No want-to-try places matched those plan-later filters.</p>
-  <% } %>
-</section>
+    <% if (wantToTryPlaces.length) { %>
+      <div class="card-grid">
+        <% wantToTryPlaces.forEach((place) => { %>
+          <%- include("partials/plan-card", { place, selectedDay: filters.day }) %>
+        <% }) %>
+      </div>
+    <% } else { %>
+      <p class="empty-state">No want-to-try places matched those plan filters.</p>
+    <% } %>
+  </section>
+<% } %>
 
 <%- include("partials/footer") %>

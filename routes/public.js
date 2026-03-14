@@ -1,7 +1,9 @@
 const express = require("express");
 const {
+  PLAN_STATUS_VALUES,
   SORT_VALUES,
   STATUS_VALUES,
+  getHomePreviewData,
   getHomepageData,
   getPublicPlaceBySlug,
   listNearbyPlaces,
@@ -15,16 +17,51 @@ const router = express.Router();
 
 router.get("/", async (req, res, next) => {
   try {
-    const [{ featuredPlaces, recentPlaces }, availableTags] = await Promise.all([
-      getHomepageData(),
-      listPublicTags()
-    ]);
+    const { planPreviewPlaces } = await getHomepageData();
 
     res.render("home", {
-      groupedTags: getGroupedTags(availableTags),
-      featuredPlaces,
+      extraHead: `
+    <link
+      rel="stylesheet"
+      href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+      integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+      crossorigin=""
+    />`,
       pageTitle: "Gluten Avoider",
-      recentPlaces
+      planPreviewPlaces
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
+router.get("/home/preview-data", async (req, res, next) => {
+  try {
+    const { location, mapPlaces, nearbyPlaces } = await getHomePreviewData(req.query);
+
+    res.json({
+      hasCoordinates: location.hasCoordinates,
+      mapPlaces: mapPlaces.map((place) => ({
+        lat: Number(place.latitude),
+        lng: Number(place.longitude),
+        name: place.name,
+        slug: place.slug,
+        suburb: place.suburb
+      })),
+      nearbyPlaces: nearbyPlaces.map((place) => ({
+        menuItems: (place.tags || [])
+          .filter((tag) => tag.tag_group === "menu_items")
+          .slice(0, 3),
+        menuUrl: place.website_url || "",
+        name: place.name,
+        openSummary: place.openSummary,
+        slug: place.slug,
+        suburb: place.suburb
+      })),
+      location: {
+        latitude: location.latitude,
+        longitude: location.longitude
+      }
     });
   } catch (error) {
     next(error);
@@ -132,7 +169,7 @@ router.get("/nearby", async (req, res, next) => {
       menuTagGroup,
       pageTitle: "Nearby now",
       places,
-      statusValues: STATUS_VALUES
+      statusValues: STATUS_VALUES.filter((status) => status !== "avoid")
     });
   } catch (error) {
     next(error);
@@ -155,6 +192,7 @@ router.get("/plan", async (req, res, next) => {
       categoryTagGroup,
       filters,
       menuTagGroup,
+      planStatusValues: PLAN_STATUS_VALUES,
       pageTitle: "Plan later",
       trustedPlaces,
       wantToTryPlaces

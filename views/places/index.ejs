@@ -70,7 +70,7 @@
   </form>
 </section>
 
-<section class="section-block">
+<section class="section-block" id="place-results">
   <div class="section-heading">
     <h2><%= places.length %> public place<%= places.length === 1 ? "" : "s" %></h2>
   </div>
@@ -85,5 +85,7 @@
     <p class="empty-state">No places matched those filters.</p>
   <% } %>
 </section>
+
+<script src="/places.js"></script>
 
 <%- include("../partials/footer") %>

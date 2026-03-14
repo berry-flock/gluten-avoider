@@ -17,17 +17,23 @@
     <p class="hours-pill <%= isOpenNowClass(place.openSummary) %>"><%= place.openSummary.label %></p>
   <% } %>
 
-  <% if (place.tags && place.tags.length) { %>
+  <% const menuItems = tagsByGroup(place.tags, "menu_items"); %>
+  <% if (menuItems.length) { %>
+    <p class="place-card__excerpt"><strong>Featured menu items:</strong> <%= menuItems.slice(0, 3).map((tag) => tag.name).join(", ") %></p>
+  <% } %>
+
+  <% if (menuItems.length) { %>
     <div class="tag-row">
-      <% place.tags.slice(0, 5).forEach((tag) => { %>
+      <% menuItems.slice(0, 5).forEach((tag) => { %>
         <a class="tag-pill tag-pill--link" href="/nearby?lat=<%= encodeURIComponent(location.latitude) %>&lng=<%= encodeURIComponent(location.longitude) %>&tags=<%= encodeURIComponent(tag.slug) %>"><%= tag.name %></a>
       <% }) %>
     </div>
   <% } %>
 
-  <% if (place.notes_public) { %>
-    <p class="place-card__excerpt"><%= excerpt(place.notes_public, 120) %></p>
-  <% } %>
-
-  <a class="text-link" href="/places/<%= place.slug %>">View details</a>
+  <div class="card-inline-links">
+    <a class="text-link" href="/places/<%= place.slug %>">Open place page</a>
+    <% if (place.website_url) { %>
+      <a class="text-link" href="<%= place.website_url %>" target="_blank" rel="noreferrer">Full menu</a>
+    <% } %>
+  </div>
 </article>

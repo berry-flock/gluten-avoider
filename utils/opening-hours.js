@@ -58,6 +58,14 @@ function getOpenSummary(openingHours, now = new Date()) {
   };
 }
 
+function getHoursForDay(openingHours, dayOfWeek) {
+  return (openingHours || []).find((entry) => Number(entry.day_of_week) === Number(dayOfWeek)) || null;
+}
+
+function formatHoursForDay(openingHours, dayOfWeek) {
+  return formatHoursRange(getHoursForDay(openingHours, dayOfWeek));
+}
+
 function formatTime(value) {
   if (!value) {
     return "";
@@ -65,12 +73,13 @@ function formatTime(value) {
 
   const [hours, minutes] = value.split(":").map(Number);
   if (hours === 24) {
-    return `12:${String(minutes).padStart(2, "0")} AM`;
+    return minutes === 0 ? "12 AM" : `12:${String(minutes).padStart(2, "0")} AM`;
   }
   const suffix = hours >= 12 ? "PM" : "AM";
   const hour12 = hours % 12 || 12;
+  const minuteText = minutes === 0 ? "" : `:${String(minutes).padStart(2, "0")}`;
 
-  return `${hour12}:${String(minutes).padStart(2, "0")} ${suffix}`;
+  return `${hour12}${minuteText} ${suffix}`;
 }
 
 function formatHoursRange(entry) {
@@ -93,5 +102,6 @@ function timeToMinutes(value) {
 module.exports = {
   DAY_LABELS,
   attachOpenSummary,
+  formatHoursForDay,
   formatHoursRange
 };
