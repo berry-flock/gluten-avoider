@@ -2,25 +2,78 @@ const nearbyLocationButton = document.getElementById("nearby-use-location");
 const nearbyLatInput = document.getElementById("nearby-lat-input");
 const nearbyLngInput = document.getElementById("nearby-lng-input");
 const nearbyLocationHelp = document.getElementById("nearby-location-help");
+const nearbyLocationDebug = document.getElementById("nearby-location-debug");
 
 function geolocationNeedsHttps() {
   return !window.isSecureContext && window.location.hostname !== "localhost" && window.location.hostname !== "127.0.0.1";
 }
 
+function setLocationMessage(message) {
+  if (nearbyLocationHelp) {
+    nearbyLocationHelp.textContent = message;
+  }
+}
+
+function setDebugMessage(message) {
+  if (nearbyLocationDebug) {
+    nearbyLocationDebug.textContent = message;
+  }
+}
+
+function geolocationErrorMessage(error) {
+  if (!error) {
+    return "Unknown geolocation failure.";
+  }
+
+  const codeMap = {
+    1: "Permission denied",
+    2: "Position unavailable",
+    3: "Timed out"
+  };
+
+  const label = codeMap[error.code] || `Error code ${error.code}`;
+  return `${label}${error.message ? `: ${error.message}` : ""}`;
+}
+
+async function updatePermissionDebug() {
+  if (!nearbyLocationDebug) {
+    return;
+  }
+
+  const parts = [
+    `Secure context: ${window.isSecureContext ? "yes" : "no"}`,
+    `Geolocation API: ${navigator.geolocation ? "available" : "missing"}`
+  ];
+
+  if (navigator.permissions && navigator.permissions.query) {
+    try {
+      const result = await navigator.permissions.query({ name: "geolocation" });
+      parts.push(`Permission state: ${result.state}`);
+    } catch (error) {
+      parts.push("Permission state: unavailable");
+    }
+  } else {
+    parts.push("Permission state: unsupported");
+  }
+
+  setDebugMessage(parts.join(" | "));
+}
+
 if (nearbyLocationButton && nearbyLatInput && nearbyLngInput) {
   nearbyLocationButton.addEventListener("click", () => {
     if (!navigator.geolocation) {
-      window.alert("Geolocation is not available in this browser.");
+      setLocationMessage("Geolocation is not available in this browser.");
       return;
     }
 
     if (geolocationNeedsHttps()) {
-      window.alert("Current location on the live site needs HTTPS. It will work once the domain has SSL.");
+      setLocationMessage("Current location on the live site needs HTTPS. It will work once the domain has SSL.");
       return;
     }
 
     nearbyLocationButton.disabled = true;
     nearbyLocationButton.textContent = "Getting location...";
+    setLocationMessage("Requesting your current location...");
 
     navigator.geolocation.getCurrentPosition(
       (position) => {
@@ -28,23 +81,26 @@ if (nearbyLocationButton && nearbyLatInput && nearbyLngInput) {
         nearbyLngInput.value = position.coords.longitude.toFixed(6);
         nearbyLocationButton.disabled = false;
         nearbyLocationButton.textContent = "Use my current location";
+        setLocationMessage(`Location found at ${nearbyLatInput.value}, ${nearbyLngInput.value}.`);
         nearbyLatInput.form.submit();
       },
-      () => {
-        window.alert("Could not get your current location.");
+      (error) => {
         nearbyLocationButton.disabled = false;
         nearbyLocationButton.textContent = "Use my current location";
+        setLocationMessage(`Could not get your current location. ${geolocationErrorMessage(error)}`);
+        updatePermissionDebug();
       },
       {
         enableHighAccuracy: true,
-        timeout: 10000
+        maximumAge: 0,
+        timeout: 20000
       }
     );
   });
 }
 
 if (nearbyLocationHelp && geolocationNeedsHttps()) {
-  nearbyLocationHelp.textContent = "Current location on the live site needs HTTPS. For now, use testing coordinates or add a domain with SSL.";
+  setLocationMessage("Current location on the live site needs HTTPS. For now, use testing coordinates or add a domain with SSL.");
 }
 
 if (
@@ -66,16 +122,21 @@ if (
         nearbyLngInput.value = position.coords.longitude.toFixed(6);
         nearbyLatInput.form.submit();
       },
-      () => {
+      (error) => {
         window.sessionStorage.setItem("nearby-autolocate-attempted", "denied");
+        setLocationMessage(`Automatic location failed. ${geolocationErrorMessage(error)}`);
+        updatePermissionDebug();
       },
       {
         enableHighAccuracy: true,
-        timeout: 10000
+        maximumAge: 0,
+        timeout: 20000
       }
     );
   }
 }
+
+updatePermissionDebug();
 
 const nearbyMapElement = document.getElementById("nearby-map");
 const nearbyMapDataElement = document.getElementById("nearby-map-data");

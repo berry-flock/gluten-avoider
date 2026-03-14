@@ -23,12 +23,13 @@ if (nearbyPreviewElement && mapElement) {
           renderGeolocationUnavailable("Could not load the homepage previews right now.");
         }
       },
-      () => {
-        renderGeolocationUnavailable("Location access was declined, so the live nearby preview is hidden for now.");
+      (error) => {
+        renderGeolocationUnavailable(`Could not get your current location. ${geolocationErrorMessage(error)}`);
       },
       {
         enableHighAccuracy: true,
-        timeout: 10000
+        maximumAge: 0,
+        timeout: 20000
       }
     );
   }
@@ -99,4 +100,19 @@ function escapeHtml(value) {
     .replace(/>/g, "&gt;")
     .replace(/"/g, "&quot;")
     .replace(/'/g, "&#39;");
+}
+
+function geolocationErrorMessage(error) {
+  if (!error) {
+    return "Unknown geolocation failure.";
+  }
+
+  const codeMap = {
+    1: "Permission denied",
+    2: "Position unavailable",
+    3: "Timed out"
+  };
+
+  const label = codeMap[error.code] || `Error code ${error.code}`;
+  return `${label}${error.message ? `: ${error.message}` : ""}`;
 }

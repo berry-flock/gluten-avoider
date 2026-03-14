@@ -6,6 +6,21 @@ function geolocationNeedsHttps() {
   return !window.isSecureContext && window.location.hostname !== "localhost" && window.location.hostname !== "127.0.0.1";
 }
 
+function geolocationErrorMessage(error) {
+  if (!error) {
+    return "Unknown geolocation failure.";
+  }
+
+  const codeMap = {
+    1: "Permission denied",
+    2: "Position unavailable",
+    3: "Timed out"
+  };
+
+  const label = codeMap[error.code] || `Error code ${error.code}`;
+  return `${label}${error.message ? `: ${error.message}` : ""}`;
+}
+
 if (locationButton && latitudeInput && longitudeInput) {
   locationButton.addEventListener("click", () => {
     if (!navigator.geolocation) {
@@ -28,14 +43,15 @@ if (locationButton && latitudeInput && longitudeInput) {
         locationButton.disabled = false;
         locationButton.textContent = "Use current location";
       },
-      () => {
-        window.alert("Could not get your current location.");
+      (error) => {
+        window.alert(`Could not get your current location. ${geolocationErrorMessage(error)}`);
         locationButton.disabled = false;
         locationButton.textContent = "Use current location";
       },
       {
         enableHighAccuracy: true,
-        timeout: 10000
+        maximumAge: 0,
+        timeout: 20000
       }
     );
   });
