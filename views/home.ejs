@@ -1,12 +1,6 @@
 <%- include("partials/header") %>
 
 <section class="home-header">
-  <div>
-    <p class="eyebrow">Gluten Avoider</p>
-    <h1 class="home-header__title">A simple springboard for deciding where to eat.</h1>
-    <p class="section-copy">Use nearby now when you need an answer quickly. Use plan later when you are making dinner plans for the weekend.</p>
-  </div>
-
   <% if (currentAdmin) { %>
     <a class="button" href="/admin/places/new">Add new restaurant</a>
   <% } %>
@@ -15,10 +9,7 @@
 <div class="home-module-grid">
   <section class="section-block home-module">
     <div class="section-heading">
-      <div>
-        <p class="eyebrow">Nearby now</p>
-        <h2><a class="module-link" href="/nearby">Nearby now</a></h2>
-      </div>
+      <h2><a class="module-link" href="/nearby">Nearby now</a></h2>
     </div>
 
     <div id="home-nearby-preview">
@@ -28,10 +19,7 @@
 
   <section class="section-block home-module">
     <div class="section-heading">
-      <div>
-        <p class="eyebrow">Plan later</p>
-        <h2><a class="module-link" href="/plan">Plan later</a></h2>
-      </div>
+      <h2><a class="module-link" href="/plan">Plan later</a></h2>
     </div>
 
     <form class="compact-search-form" method="get" action="/places">
@@ -53,10 +41,7 @@
 
   <section class="section-block home-module home-module--map">
     <div class="section-heading">
-      <div>
-        <p class="eyebrow">Map</p>
-        <h2><a class="module-link" href="/map">Map view</a></h2>
-      </div>
+      <h2><a class="module-link" href="/map">Map view</a></h2>
     </div>
 
     <div id="home-map" class="nearby-map"></div>

@@ -2,7 +2,6 @@ const nearbyLocationButton = document.getElementById("nearby-use-location");
 const nearbyLatInput = document.getElementById("nearby-lat-input");
 const nearbyLngInput = document.getElementById("nearby-lng-input");
 const nearbyLocationHelp = document.getElementById("nearby-location-help");
-const nearbyLocationDebug = document.getElementById("nearby-location-debug");
 
 function geolocationNeedsHttps() {
   return !window.isSecureContext && window.location.hostname !== "localhost" && window.location.hostname !== "127.0.0.1";
@@ -11,12 +10,6 @@ function geolocationNeedsHttps() {
 function setLocationMessage(message) {
   if (nearbyLocationHelp) {
     nearbyLocationHelp.textContent = message;
-  }
-}
-
-function setDebugMessage(message) {
-  if (nearbyLocationDebug) {
-    nearbyLocationDebug.textContent = message;
   }
 }
 
@@ -33,30 +26,6 @@ function geolocationErrorMessage(error) {
 
   const label = codeMap[error.code] || `Error code ${error.code}`;
   return `${label}${error.message ? `: ${error.message}` : ""}`;
-}
-
-async function updatePermissionDebug() {
-  if (!nearbyLocationDebug) {
-    return;
-  }
-
-  const parts = [
-    `Secure context: ${window.isSecureContext ? "yes" : "no"}`,
-    `Geolocation API: ${navigator.geolocation ? "available" : "missing"}`
-  ];
-
-  if (navigator.permissions && navigator.permissions.query) {
-    try {
-      const result = await navigator.permissions.query({ name: "geolocation" });
-      parts.push(`Permission state: ${result.state}`);
-    } catch (error) {
-      parts.push("Permission state: unavailable");
-    }
-  } else {
-    parts.push("Permission state: unsupported");
-  }
-
-  setDebugMessage(parts.join(" | "));
 }
 
 if (nearbyLocationButton && nearbyLatInput && nearbyLngInput) {
@@ -88,7 +57,6 @@ if (nearbyLocationButton && nearbyLatInput && nearbyLngInput) {
         nearbyLocationButton.disabled = false;
         nearbyLocationButton.textContent = "Use my current location";
         setLocationMessage(`Could not get your current location. ${geolocationErrorMessage(error)}`);
-        updatePermissionDebug();
       },
       {
         enableHighAccuracy: true,
@@ -125,7 +93,6 @@ if (
       (error) => {
         window.sessionStorage.setItem("nearby-autolocate-attempted", "denied");
         setLocationMessage(`Automatic location failed. ${geolocationErrorMessage(error)}`);
-        updatePermissionDebug();
       },
       {
         enableHighAccuracy: true,
@@ -135,8 +102,6 @@ if (
     );
   }
 }
-
-updatePermissionDebug();
 
 const nearbyMapElement = document.getElementById("nearby-map");
 const nearbyMapDataElement = document.getElementById("nearby-map-data");

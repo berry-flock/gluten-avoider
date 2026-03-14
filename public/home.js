@@ -55,7 +55,7 @@ function renderNearbyPreview(places) {
         </div>
       </div>
       ${place.openSummary ? `<p class="hours-pill ${place.openSummary.isOpen ? "hours-pill--open" : "hours-pill--closed"}">${escapeHtml(place.openSummary.label)}</p>` : ""}
-      ${place.menuItems.length ? `<p class="place-card__excerpt"><strong>Featured menu items:</strong> ${escapeHtml(place.menuItems.map((tag) => tag.name).join(", "))}</p>` : ""}
+      ${place.menuItems.length ? `<p class="place-card__excerpt"><strong>Key menu items:</strong> ${escapeHtml(place.menuItems.map((tag) => tag.name).join(", "))}</p>` : ""}
       <div class="card-inline-links">
         <a class="text-link" href="/places/${encodeURIComponent(place.slug)}">Open place page</a>
         ${place.menuUrl ? `<a class="text-link" href="${escapeHtml(place.menuUrl)}" target="_blank" rel="noreferrer">Menu</a>` : ""}
