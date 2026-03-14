@@ -96,9 +96,9 @@
       <textarea
         name="opening_hours_text"
         rows="16"
-        placeholder="Friday&#10;4 pm–12 am&#10;&#10;Saturday&#10;4 pm–12 am&#10;&#10;Sunday&#10;Closed"
+        placeholder="Friday&#10;12-2 pm&#10;5-10 pm&#10;&#10;Saturday&#10;Open 24 hours&#10;&#10;Sunday&#10;Closed"
       ><%= formData.opening_hours_text %></textarea>
-      <span class="field-help">Paste Google or Apple Maps hours directly. Split lunch and dinner lines are accepted, but they are currently saved as one broad range for the day.</span>
+      <span class="field-help">Paste one day heading followed by one or more service lines. Supports split lunch and dinner services, overnight closes, and Open 24 hours.</span>
       <% if (errors.opening_hours_text) { %><span class="field-error"><%= errors.opening_hours_text %></span><% } %>
     </label>
 

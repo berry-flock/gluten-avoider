@@ -66,6 +66,10 @@ function buildAppleMapsUrl(place) {
 }
 
 function buildGoogleMapsUrl(place) {
+  if (place.address || place.name) {
+    return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent([place.name, place.address, place.suburb].filter(Boolean).join(", "))}`;
+  }
+
   if (place.latitude !== null && place.latitude !== "" && place.longitude !== null && place.longitude !== "") {
     return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${place.latitude},${place.longitude}`)}`;
   }

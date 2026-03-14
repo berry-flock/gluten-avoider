@@ -1,9 +1,17 @@
 const { STATUS_VALUES } = require("../db/places");
-const { DAY_LABELS, formatHoursRange } = require("./opening-hours");
+const {
+  DAY_LABELS,
+  formatHoursForDay,
+  formatHoursRange,
+  normalizeOpeningHours,
+  timeToMinutes
+} = require("./opening-hours");
 
 const TAG_GROUP_KEYS = ["category", "menu_items", "gluten_features"];
 
 function buildPlaceFormData(place = {}) {
+  const normalizedOpeningHours = normalizeOpeningHours(place.opening_hours || []);
+
   return {
     address: place.address || "",
     featured: Boolean(place.featured),
@@ -20,9 +28,9 @@ function buildPlaceFormData(place = {}) {
     },
     notes_private: place.notes_private || "",
     notes_public: place.notes_public || "",
-    opening_hours: normalizeOpeningHours(place.opening_hours || []),
-    opening_hours_text: place.opening_hours && place.opening_hours.length
-      ? formatOpeningHoursText(place.opening_hours || [])
+    opening_hours: normalizedOpeningHours,
+    opening_hours_text: normalizedOpeningHours.length
+      ? formatOpeningHoursText(normalizedOpeningHours)
       : "",
     share_url: "",
     status: place.status || "trusted",
@@ -98,7 +106,8 @@ function preparePlaceForSave(formData) {
     gf_confidence: formData.gf_confidence || "unknown",
     google_maps_url: formData.google_maps_url || "",
     latitude: formData.latitude ? Number(formData.latitude) : "",
-    longitude: formData.longitude ? Number(formData.longitude) : ""
+    longitude: formData.longitude ? Number(formData.longitude) : "",
+    opening_hours: normalizeOpeningHours(formData.opening_hours || [])
   };
 }
 
@@ -109,12 +118,10 @@ function parseOpeningHoursText(value) {
     .filter((line) => line && !/^[\uE000-\uF8FF]+$/.test(line));
 
   if (!lines.length) {
-    return {
-      opening_hours: []
-    };
+    return { opening_hours: [] };
   }
 
-  const byDay = new Map();
+  const openingHours = [];
   let index = 0;
 
   while (index < lines.length) {
@@ -144,29 +151,27 @@ function parseOpeningHoursText(value) {
       return { error: `Missing hours for ${dayLine}.` };
     }
 
-    const parsedRange = parseHoursLines(hourLines);
+    const parsedEntries = parseHoursLines(hourLines);
 
-    if (parsedRange.error) {
-      return { error: `${dayLine}: ${parsedRange.error}` };
+    if (parsedEntries.error) {
+      return { error: `${dayLine}: ${parsedEntries.error}` };
     }
 
-    byDay.set(dayIndex, {
-      day_of_week: dayIndex,
-      open_time: parsedRange.open_time,
-      close_time: parsedRange.close_time,
-      is_closed: parsedRange.is_closed
+    parsedEntries.entries.forEach((entry, serviceIndex) => {
+      openingHours.push({
+        close_time: entry.close_time,
+        day_of_week: dayIndex,
+        is_closed: entry.is_closed,
+        open_time: entry.open_time,
+        sort_order: serviceIndex
+      });
     });
 
     index = nextIndex;
   }
 
   return {
-    opening_hours: DAY_LABELS.map((dayLabel, dayIndex) => byDay.get(dayIndex) || {
-      day_of_week: dayIndex,
-      open_time: "",
-      close_time: "",
-      is_closed: true
-    })
+    opening_hours: normalizeOpeningHours(openingHours)
   };
 }
 
@@ -175,29 +180,54 @@ function parseHoursLines(lines) {
     .map((line) => line.replace(/\u202f/g, " ").trim())
     .filter(Boolean);
 
-  if (normalizedLines.length === 1) {
-    return parseHoursRange(normalizedLines[0]);
+  if (normalizedLines.length === 1 && /^open 24 hours$/i.test(normalizedLines[0])) {
+    return {
+      entries: [{
+        close_time: "24:00",
+        is_closed: false,
+        open_time: "00:00"
+      }]
+    };
+  }
+
+  if (normalizedLines.length === 1 && /^closed$/i.test(normalizedLines[0])) {
+    return {
+      entries: [{
+        close_time: "",
+        is_closed: true,
+        open_time: ""
+      }]
+    };
   }
 
   if (normalizedLines.some((line) => /^closed$/i.test(line))) {
-    return { error: "Use either Closed or one or more opening ranges." };
+    return { error: "Use either Closed, Open 24 hours, or one or more opening ranges." };
   }
 
-  const parsedRanges = normalizedLines.map((line) => parseHoursRange(line));
-  const rangeError = parsedRanges.find((parsedRange) => parsedRange.error);
+  const entries = [];
 
-  if (rangeError) {
-    return rangeError;
+  for (const line of normalizedLines) {
+    const parsedRange = parseHoursRange(line);
+
+    if (parsedRange.error) {
+      return parsedRange;
+    }
+
+    entries.push(parsedRange);
   }
 
-  return {
-    close_time: parsedRanges[parsedRanges.length - 1].close_time,
-    is_closed: false,
-    open_time: parsedRanges[0].open_time
-  };
+  return { entries };
 }
 
 function parseHoursRange(value) {
+  if (/^open 24 hours$/i.test(value)) {
+    return {
+      close_time: "24:00",
+      is_closed: false,
+      open_time: "00:00"
+    };
+  }
+
   if (/^closed$/i.test(value)) {
     return {
       close_time: "",
@@ -207,6 +237,7 @@ function parseHoursRange(value) {
   }
 
   const normalized = value
+    .replace(/\bto\b/gi, "-")
     .replace(/[–—]/g, "-")
     .replace(/\s+/g, " ")
     .trim();
@@ -214,30 +245,32 @@ function parseHoursRange(value) {
   const parts = normalized.split("-").map((part) => part.trim()).filter(Boolean);
 
   if (parts.length !== 2) {
-    return { error: "Use either Closed or a range like 4 pm-10 pm." };
+    return { error: "Use Closed, Open 24 hours, or a range like 12-2 pm or 5-10 pm." };
   }
 
   const openTime = parseClockValue(parts[0]);
-  const closeTime = parseClockValue(parts[1], openTime.minutes);
 
-  if (!openTime || !closeTime) {
-    return { error: "Time range should look like 4 pm-10 pm or 4:30 pm-12 am." };
+  if (!openTime) {
+    return { error: "Could not read the opening time." };
+  }
+
+  const inferredOpenTime = inferOpenMeridiem(openTime, parts[1]);
+  const closeTime = parseClockValue(parts[1], inferredOpenTime.minutes);
+
+  if (!closeTime) {
+    return { error: "Could not read the closing time." };
   }
 
   let closeMinutes = closeTime.minutes;
 
-  if (closeMinutes <= openTime.minutes && closeMinutes === 0) {
-    closeMinutes = 24 * 60;
-  }
-
-  if (closeMinutes <= openTime.minutes) {
-    return { error: "Close time must be later than open time. Overnight times beyond midnight are not supported yet except 12 am." };
+  if (closeMinutes <= inferredOpenTime.minutes) {
+    closeMinutes += 24 * 60;
   }
 
   return {
     close_time: minutesToTimeString(closeMinutes),
     is_closed: false,
-    open_time: minutesToTimeString(openTime.minutes)
+    open_time: minutesToTimeString(inferredOpenTime.minutes)
   };
 }
 
@@ -263,13 +296,41 @@ function parseClockValue(value, fallbackMinutes = null) {
     hours = hours === 12 ? 12 : hours + 12;
   } else if (fallbackMinutes !== null) {
     const fallbackHours = Math.floor(fallbackMinutes / 60);
-    if (hours < 12 && fallbackHours >= 12) {
+
+    if (fallbackHours >= 12 && hours < 12) {
       hours += 12;
     }
   }
 
   return {
-    minutes: hours * 60 + minutes
+    hasMeridiem: Boolean(meridiem),
+    meridiem: meridiem || "",
+    minutes: hours * 60 + minutes,
+    rawHours: Number(match[1])
+  };
+}
+
+function inferOpenMeridiem(openTime, closeValue) {
+  if (openTime.hasMeridiem) {
+    return openTime;
+  }
+
+  const closeProbe = String(closeValue || "").toLowerCase();
+  const closeHasAm = /\bam\b/.test(closeProbe);
+  const closeHasPm = /\bpm\b/.test(closeProbe);
+  let minutes = openTime.minutes;
+
+  if (closeHasPm && minutes < 12 * 60) {
+    minutes += 12 * 60;
+  }
+
+  if (closeHasAm && openTime.rawHours === 12) {
+    minutes = 0;
+  }
+
+  return {
+    ...openTime,
+    minutes
   };
 }
 
@@ -280,20 +341,26 @@ function minutesToTimeString(totalMinutes) {
 }
 
 function formatOpeningHoursText(openingHours) {
-  return normalizeOpeningHours(openingHours)
-    .map((hours) => `${DAY_LABELS[hours.day_of_week]}\n${formatHoursRange(hours)}`)
-    .join("\n\n");
-}
+  const groupedByDay = new Map();
+  const normalizedHours = normalizeOpeningHours(openingHours);
 
-function normalizeOpeningHours(openingHours) {
-  const hoursByDay = new Map(openingHours.map((hours) => [hours.day_of_week, hours]));
+  normalizedHours.forEach((entry) => {
+    if (!groupedByDay.has(entry.day_of_week)) {
+      groupedByDay.set(entry.day_of_week, []);
+    }
 
-  return DAY_LABELS.map((dayLabel, dayIndex) => hoursByDay.get(dayIndex) || {
-    day_of_week: dayIndex,
-    open_time: "",
-    close_time: "",
-    is_closed: true
+    groupedByDay.get(entry.day_of_week).push(entry);
   });
+
+  return DAY_LABELS.map((dayLabel, dayIndex) => {
+    const dayEntries = groupedByDay.get(dayIndex);
+
+    if (!dayEntries || !dayEntries.length) {
+      return `${dayLabel}\nClosed`;
+    }
+
+    return `${dayLabel}\n${dayEntries.map((entry) => formatHoursRange(entry)).join("\n")}`;
+  }).join("\n\n");
 }
 
 function parseNewTags(newTagsInput) {

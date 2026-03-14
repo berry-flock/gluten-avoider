@@ -7,7 +7,7 @@ async function enrichPlaceFormFromShareLink(formData) {
     const response = await fetch(formData.share_url, {
       redirect: "follow",
       headers: {
-        "user-agent": "Mozilla/5.0 TrustedPlaces/1.0"
+        "user-agent": "Mozilla/5.0 GlutenAvoider/1.0"
       }
     });
 
@@ -68,7 +68,7 @@ function extractAppleMapsData(url, responseText = "") {
     responseText
   ]);
   const query = url.searchParams.get("q") || "";
-  const address = url.searchParams.get("address") || "";
+  const address = url.searchParams.get("address") || extractAddressFromMetadata(responseText) || "";
 
   return {
     address: streetAddressFromAddress(address),
@@ -89,13 +89,15 @@ function extractGoogleMapsData(url, responseText = "") {
     url.toString(),
     responseText
   ]);
+  const metadataAddress = extractAddressFromMetadata(responseText);
+  const decodedPathName = pathMatch ? decodeURIComponent(pathMatch[1]).replace(/\+/g, " ") : "";
 
   return {
-    address: "",
+    address: streetAddressFromAddress(metadataAddress),
     latitude: coordinatePair[0],
     longitude: coordinatePair[1],
-    name: pathMatch ? decodeURIComponent(pathMatch[1]).replace(/\+/g, " ") : "",
-    suburb: ""
+    name: decodedPathName,
+    suburb: suburbFromAddress(metadataAddress)
   };
 }
 
@@ -181,36 +183,105 @@ function enrichWithMetadata(imported, responseText) {
     return imported;
   }
 
-  const title = extractMetaContent(responseText, "og:title")
+  const title = extractMetaContent(responseText, "property", "og:title")
+    || extractMetaContent(responseText, "name", "title")
     || extractTitle(responseText);
 
   if (!imported.name && title && !/apple maps|google maps/i.test(title)) {
     imported.name = title.replace(/\s*[-|].*$/, "").trim();
   }
 
+  if (!imported.address) {
+    const address = extractAddressFromMetadata(responseText);
+    if (address) {
+      imported.address = streetAddressFromAddress(address);
+    }
+  }
+
+  if (!imported.suburb && imported.address) {
+    imported.suburb = suburbFromAddress(extractAddressFromMetadata(responseText));
+  }
+
   return imported;
 }
 
-function extractMetaContent(html, propertyName) {
-  const metaMatch = html.match(
-    new RegExp(`<meta[^>]+property=["']${propertyName}["'][^>]+content=["']([^"']+)["']`, "i")
-  );
+function extractAddressFromMetadata(html) {
+  const candidates = [
+    extractMetaContent(html, "property", "og:description"),
+    extractMetaContent(html, "name", "description"),
+    extractMetaContent(html, "itemprop", "description"),
+    extractTitle(html)
+  ].filter(Boolean);
 
-  return metaMatch ? decodeHtml(metaMatch[1]) : "";
+  for (const candidate of candidates) {
+    const address = parseAddressCandidate(candidate);
+    if (address) {
+      return address;
+    }
+  }
+
+  return "";
+}
+
+function parseAddressCandidate(value) {
+  const candidate = decodeHtml(String(value || ""))
+    .replace(/\s+/g, " ")
+    .trim();
+
+  if (!candidate) {
+    return "";
+  }
+
+  const pieces = candidate.split(/[·|]/).map((part) => part.trim()).filter(Boolean);
+
+  for (const piece of pieces) {
+    if (looksLikeStreetAddress(piece)) {
+      return piece;
+    }
+  }
+
+  const directMatch = candidate.match(/\b\d+[A-Za-z/-]*\s+[^,]+,\s*[^,]+(?:,\s*(?:NSW|VIC|QLD|SA|WA|TAS|NT|ACT)\s*\d{4})?(?:,\s*Australia)?/i);
+  return directMatch ? directMatch[0].trim() : "";
+}
+
+function looksLikeStreetAddress(value) {
+  return /\b\d+[A-Za-z/-]*\s+.+\b(?:Street|St|Road|Rd|Avenue|Ave|Drive|Dr|Lane|Ln|Boulevard|Blvd|Place|Pl|Way|Court|Ct)\b/i.test(value);
+}
+
+function extractMetaContent(html, attributeName, attributeValue) {
+  const patterns = [
+    new RegExp(`<meta[^>]+${attributeName}=(["'])${escapeRegex(attributeValue)}\\1[^>]+content=(["'])(.*?)\\2`, "is"),
+    new RegExp(`<meta[^>]+content=(["'])(.*?)\\1[^>]+${attributeName}=(["'])${escapeRegex(attributeValue)}\\3`, "is")
+  ];
+
+  for (const pattern of patterns) {
+    const match = html.match(pattern);
+    if (match) {
+      const content = match[3] || match[2];
+      return decodeHtml(content);
+    }
+  }
+
+  return "";
 }
 
 function extractTitle(html) {
-  const titleMatch = html.match(/<title[^>]*>([^<]+)<\/title>/i);
-  return titleMatch ? decodeHtml(titleMatch[1]) : "";
+  const titleMatch = html.match(/<title[^>]*>([\s\S]*?)<\/title>/i);
+  return titleMatch ? decodeHtml(titleMatch[1].trim()) : "";
+}
+
+function escapeRegex(value) {
+  return String(value).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
 function decodeHtml(value) {
-  return value
+  return String(value)
     .replace(/&amp;/g, "&")
     .replace(/&quot;/g, "\"")
-    .replace(/&#39;/g, "'")
+    .replace(/&#39;|&apos;/g, "'")
     .replace(/&lt;/g, "<")
-    .replace(/&gt;/g, ">");
+    .replace(/&gt;/g, ">")
+    .replace(/&#x27;/gi, "'");
 }
 
 function emptyImportResult() {

@@ -49,8 +49,9 @@ CREATE TABLE IF NOT EXISTS opening_hours (
   open_time TEXT DEFAULT '',
   close_time TEXT DEFAULT '',
   is_closed INTEGER NOT NULL DEFAULT 0,
+  sort_order INTEGER NOT NULL DEFAULT 0,
   FOREIGN KEY (place_id) REFERENCES places (id) ON DELETE CASCADE,
-  UNIQUE (place_id, day_of_week)
+  UNIQUE (place_id, day_of_week, sort_order)
 );
 
 CREATE INDEX IF NOT EXISTS idx_places_slug ON places (slug);

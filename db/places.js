@@ -248,13 +248,15 @@ async function attachOpeningHours(places) {
   const hourRows = await all(
     `SELECT
        oh.place_id,
+       oh.id,
        oh.day_of_week,
        oh.open_time,
        oh.close_time,
-       oh.is_closed
+       oh.is_closed,
+       oh.sort_order
      FROM opening_hours oh
      WHERE oh.place_id IN (${placeholders})
-     ORDER BY oh.day_of_week ASC`,
+     ORDER BY oh.day_of_week ASC, oh.sort_order ASC, oh.open_time ASC`,
     placeIds
   );
 
@@ -268,8 +270,10 @@ async function attachOpeningHours(places) {
     hoursByPlaceId.get(row.place_id).push({
       close_time: row.close_time,
       day_of_week: row.day_of_week,
+      id: row.id,
       is_closed: Boolean(row.is_closed),
-      open_time: row.open_time
+      open_time: row.open_time,
+      sort_order: row.sort_order
     });
   }
 

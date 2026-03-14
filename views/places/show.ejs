@@ -55,10 +55,10 @@
     <section class="detail-block">
       <h2>Opening hours</h2>
       <dl class="hours-list">
-        <% place.openingHours.forEach((hours) => { %>
+        <% dayLabels.forEach((dayLabel, dayIndex) => { %>
           <div class="hours-row">
-            <dt><%= dayLabels[hours.day_of_week] %></dt>
-            <dd><%= formatHoursRange(hours) %></dd>
+            <dt><%= dayLabel %></dt>
+            <dd><%= formatHoursForDay(place.openingHours, dayIndex) %></dd>
           </div>
         <% }) %>
       </dl>

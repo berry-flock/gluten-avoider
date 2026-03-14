@@ -38,19 +38,21 @@ async function getAdminPlaceById(id) {
   );
 
   const openingHours = await all(
-    `SELECT day_of_week, open_time, close_time, is_closed
+    `SELECT id, day_of_week, open_time, close_time, is_closed, sort_order
      FROM opening_hours
      WHERE place_id = ?
-     ORDER BY day_of_week ASC`,
+     ORDER BY day_of_week ASC, sort_order ASC, open_time ASC`,
     [id]
   );
 
   place.tag_ids = tagRows.map((row) => row.tag_id);
   place.opening_hours = openingHours.map((row) => ({
+    id: row.id,
     day_of_week: row.day_of_week,
     open_time: row.open_time,
     close_time: row.close_time,
-    is_closed: Boolean(row.is_closed)
+    is_closed: Boolean(row.is_closed),
+    sort_order: row.sort_order
   }));
 
   return place;
@@ -193,14 +195,15 @@ async function replaceOpeningHours(placeId, openingHours) {
 
   for (const hours of openingHours) {
     await run(
-      `INSERT INTO opening_hours (place_id, day_of_week, open_time, close_time, is_closed)
-       VALUES (?, ?, ?, ?, ?)`,
+      `INSERT INTO opening_hours (place_id, day_of_week, open_time, close_time, is_closed, sort_order)
+       VALUES (?, ?, ?, ?, ?, ?)`,
       [
         placeId,
         hours.day_of_week,
         hours.open_time,
         hours.close_time,
-        hours.is_closed ? 1 : 0
+        hours.is_closed ? 1 : 0,
+        hours.sort_order || 0
       ]
     );
   }
