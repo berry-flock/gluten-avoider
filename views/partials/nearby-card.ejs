@@ -19,10 +19,6 @@
 
   <% const menuItems = tagsByGroup(place.tags, "menu_items"); %>
   <% if (menuItems.length) { %>
-    <p class="place-card__excerpt"><strong>Featured menu items:</strong> <%= menuItems.slice(0, 3).map((tag) => tag.name).join(", ") %></p>
-  <% } %>
-
-  <% if (menuItems.length) { %>
     <div class="tag-row">
       <% menuItems.slice(0, 5).forEach((tag) => { %>
         <a class="tag-pill tag-pill--link" href="/nearby?lat=<%= encodeURIComponent(location.latitude) %>&lng=<%= encodeURIComponent(location.longitude) %>&tags=<%= encodeURIComponent(tag.slug) %>"><%= tag.name %></a>

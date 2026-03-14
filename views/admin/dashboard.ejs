@@ -38,6 +38,44 @@
 <section class="section-block">
   <div class="section-heading">
     <div>
+      <p class="eyebrow">Backup</p>
+      <h2>Download or restore your place data</h2>
+    </div>
+  </div>
+
+  <% if (backupNotice) { %>
+    <p class="form-message form-message--success"><%= backupNotice %></p>
+  <% } %>
+
+  <% if (backupError) { %>
+    <p class="form-message form-message--error"><%= backupError %></p>
+  <% } %>
+
+  <div class="admin-backup-grid">
+    <section class="geo-panel">
+      <h3>Download CSV backup</h3>
+      <p class="section-copy">Exports places, grouped tags, notes, visibility, and opening hours in one spreadsheet-friendly CSV file.</p>
+      <a class="button" href="/admin/backup.csv">Download backup CSV</a>
+    </section>
+
+    <section class="geo-panel">
+      <h3>Restore from CSV</h3>
+      <p class="section-copy">This replaces the current places, tags, and opening hours with the contents of the backup CSV. Admin login is not affected.</p>
+      <form class="stack-form" method="post" action="/admin/backup/import">
+        <label>
+          Choose backup CSV
+          <input type="file" id="backup-file-input" accept=".csv,text/csv" />
+        </label>
+        <input type="hidden" name="csv_backup" id="backup-csv-content" />
+        <button class="button button--secondary" type="submit">Restore backup</button>
+      </form>
+    </section>
+  </div>
+</section>
+
+<section class="section-block">
+  <div class="section-heading">
+    <div>
       <p class="eyebrow">Hours reminder</p>
       <h2>Places missing opening hours</h2>
     </div>
@@ -55,5 +93,7 @@
     <p class="empty-state">Everything currently has opening hours filled in.</p>
   <% } %>
 </section>
+
+<script src="/admin-backup.js"></script>
 
 <%- include("../partials/footer") %>

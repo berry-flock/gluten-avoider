@@ -413,6 +413,7 @@ function isValidHttpUrl(value) {
 
 module.exports = {
   buildPlaceFormData,
+  parseOpeningHoursText,
   parsePlaceForm,
   preparePlaceForSave,
   validatePlaceForm

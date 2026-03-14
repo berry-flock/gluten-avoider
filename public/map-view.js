@@ -5,8 +5,8 @@ if (mapViewElement && mapViewDataElement && window.L) {
   const mapData = JSON.parse(mapViewDataElement.textContent);
   const map = window.L.map("map-view");
 
-  window.L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-    attribution: "&copy; OpenStreetMap contributors"
+  window.L.tileLayer("https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png", {
+    attribution: '&copy; OpenStreetMap contributors &copy; CARTO'
   }).addTo(map);
 
   if (!mapData.places.length) {

@@ -223,13 +223,27 @@ async function resolveTagIds(existingTagIds, newTagsByGroup) {
       const existingTag = await get(
         `SELECT id
          FROM tags
-         WHERE lower(name) = lower(?)`,
-        [name]
+         WHERE lower(name) = lower(?)
+           AND COALESCE(tag_group, 'category') = ?`,
+        [name, groupKey]
       );
 
       if (existingTag) {
         resolvedIds.push(existingTag.id);
         continue;
+      }
+
+      const tagInDifferentGroup = await get(
+        `SELECT tag_group
+         FROM tags
+         WHERE lower(name) = lower(?)`,
+        [name]
+      );
+
+      if (tagInDifferentGroup) {
+        const error = new Error(`The tag "${name}" already exists under a different tag group.`);
+        error.code = "TAG_GROUP_CONFLICT";
+        throw error;
       }
 
       const slug = await createUniqueTagSlug(name);

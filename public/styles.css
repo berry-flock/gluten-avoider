@@ -498,6 +498,12 @@ select {
   margin-top: 1.5rem;
 }
 
+.admin-backup-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 1rem;
+}
+
 .stat-card {
   padding: 1.2rem;
   border: 1px solid var(--line);
@@ -784,6 +790,10 @@ textarea {
   margin-top: 0;
   padding-top: 0;
   border-top: 0;
+}
+
+.detail-block--menu-link .button {
+  width: fit-content;
 }
 
 .sr-only {

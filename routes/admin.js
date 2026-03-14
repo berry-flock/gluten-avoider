@@ -1,5 +1,6 @@
 const bcrypt = require("bcrypt");
 const express = require("express");
+const { exportPlacesCsv, importPlacesCsv } = require("../db/admin-backup");
 const {
   createAdminPlace,
   deleteAdminPlace,
@@ -115,12 +116,46 @@ router.get("/admin", requireAdmin, async (req, res, next) => {
     ]);
 
     res.render("admin/dashboard", {
+      backupError: res.locals.flashError,
+      backupNotice: res.locals.flashNotice,
       pageTitle: "Admin dashboard",
       placesMissingOpeningHours,
       stats
     });
   } catch (error) {
     next(error);
+  }
+});
+
+router.get("/admin/backup.csv", requireAdmin, async (req, res, next) => {
+  try {
+    const csv = await exportPlacesCsv();
+    const dateStamp = new Date().toISOString().slice(0, 10);
+
+    res.setHeader("Content-Type", "text/csv; charset=utf-8");
+    res.setHeader("Content-Disposition", `attachment; filename="gluten-avoider-backup-${dateStamp}.csv"`);
+    res.send(csv);
+  } catch (error) {
+    next(error);
+  }
+});
+
+router.post("/admin/backup/import", requireAdmin, async (req, res, next) => {
+  try {
+    const csvText = String(req.body.csv_backup || "").trim();
+
+    if (!csvText) {
+      req.session.flashError = "Choose a backup CSV file before restoring.";
+      res.redirect("/admin");
+      return;
+    }
+
+    const importedCount = await importPlacesCsv(csvText);
+    req.session.flashNotice = `Restored ${importedCount} place${importedCount === 1 ? "" : "s"} from backup.`;
+    res.redirect("/admin");
+  } catch (error) {
+    req.session.flashError = error.message || "Could not restore that backup file.";
+    res.redirect("/admin");
   }
 });
 
@@ -142,16 +177,13 @@ router.get("/admin/places/new", requireAdmin, async (req, res, next) => {
   try {
     const allTags = await listAllTags();
 
-    res.render("admin/places/form", {
-      STATUS_VALUES,
+    res.render("admin/places/form", buildPlaceFormViewModel({
       allTags,
-      errors: {},
       formAction: "/admin/places",
       formData: buildPlaceFormData(),
-      groupedTags: getGroupedTags(allTags),
       pageTitle: "Add place",
       submitLabel: "Create place"
-    });
+    }));
   } catch (error) {
     next(error);
   }
@@ -169,16 +201,14 @@ router.post("/admin/places", requireAdmin, async (req, res, next) => {
   if (Object.keys(errors).length > 0) {
     try {
       const allTags = await listAllTags();
-      res.status(400).render("admin/places/form", {
-        STATUS_VALUES,
+      res.status(400).render("admin/places/form", buildPlaceFormViewModel({
         allTags,
         errors,
         formAction: "/admin/places",
         formData,
-        groupedTags: getGroupedTags(allTags),
         pageTitle: "Add place",
         submitLabel: "Create place"
-      });
+      }));
     } catch (error) {
       next(error);
     }
@@ -189,6 +219,24 @@ router.post("/admin/places", requireAdmin, async (req, res, next) => {
     await createAdminPlace(preparePlaceForSave(formData));
     res.redirect("/admin/places?notice=created");
   } catch (error) {
+    if (error.code === "TAG_GROUP_CONFLICT") {
+      try {
+        const allTags = await listAllTags();
+        res.status(400).render("admin/places/form", buildPlaceFormViewModel({
+          allTags,
+          errors,
+          formAction: "/admin/places",
+          formData,
+          formError: error.message,
+          pageTitle: "Add place",
+          submitLabel: "Create place"
+        }));
+      } catch (renderError) {
+        next(renderError);
+      }
+      return;
+    }
+
     next(error);
   }
 });
@@ -207,16 +255,13 @@ router.get("/admin/places/:id/edit", requireAdmin, async (req, res, next) => {
       return;
     }
 
-    res.render("admin/places/form", {
-      STATUS_VALUES,
+    res.render("admin/places/form", buildPlaceFormViewModel({
       allTags,
-      errors: {},
       formAction: `/admin/places/${place.id}`,
       formData: buildPlaceFormData(place),
-      groupedTags: getGroupedTags(allTags),
       pageTitle: `Edit ${place.name}`,
       submitLabel: "Save changes"
-    });
+    }));
   } catch (error) {
     next(error);
   }
@@ -234,16 +279,14 @@ router.post("/admin/places/:id", requireAdmin, async (req, res, next) => {
   if (Object.keys(errors).length > 0) {
     try {
       const allTags = await listAllTags();
-      res.status(400).render("admin/places/form", {
-        STATUS_VALUES,
+      res.status(400).render("admin/places/form", buildPlaceFormViewModel({
         allTags,
         errors,
         formAction: `/admin/places/${req.params.id}`,
         formData,
-        groupedTags: getGroupedTags(allTags),
         pageTitle: "Edit place",
         submitLabel: "Save changes"
-      });
+      }));
     } catch (error) {
       next(error);
     }
@@ -263,6 +306,24 @@ router.post("/admin/places/:id", requireAdmin, async (req, res, next) => {
     await updateAdminPlace(existingPlace.id, preparePlaceForSave(formData));
     res.redirect("/admin/places?notice=updated");
   } catch (error) {
+    if (error.code === "TAG_GROUP_CONFLICT") {
+      try {
+        const allTags = await listAllTags();
+        res.status(400).render("admin/places/form", buildPlaceFormViewModel({
+          allTags,
+          errors,
+          formAction: `/admin/places/${req.params.id}`,
+          formData,
+          formError: error.message,
+          pageTitle: "Edit place",
+          submitLabel: "Save changes"
+        }));
+      } catch (renderError) {
+        next(renderError);
+      }
+      return;
+    }
+
     next(error);
   }
 });
@@ -474,6 +535,28 @@ function getTagErrorMessage(value) {
   return {
     "tag-in-use": "This tag is still assigned to one or more places, so it cannot be deleted yet."
   }[value] || "";
+}
+
+function buildPlaceFormViewModel({
+  allTags,
+  errors = {},
+  formAction,
+  formData,
+  formError = "",
+  pageTitle,
+  submitLabel
+}) {
+  return {
+    STATUS_VALUES,
+    allTags,
+    errors,
+    formAction,
+    formData,
+    formError,
+    groupedTags: getGroupedTags(allTags),
+    pageTitle,
+    submitLabel
+  };
 }
 
 module.exports = router;

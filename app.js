@@ -31,7 +31,9 @@ installViewHelpers(app);
 app.use((req, res, next) => {
   res.locals.currentAdmin = req.session.adminUser || null;
   res.locals.flashError = req.session.flashError || "";
+  res.locals.flashNotice = req.session.flashNotice || "";
   delete req.session.flashError;
+  delete req.session.flashNotice;
   next();
 });
 

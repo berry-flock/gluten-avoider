@@ -10,6 +10,10 @@
   </div>
 
   <form class="stack-form" method="post" action="<%= formAction %>">
+    <% if (formError) { %>
+      <p class="form-message form-message--error"><%= formError %></p>
+    <% } %>
+
     <div class="sticky-save-bar">
       <button class="button" type="submit"><%= submitLabel %></button>
       <a class="button button--secondary" href="/admin/places">Cancel</a>

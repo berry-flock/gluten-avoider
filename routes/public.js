@@ -4,7 +4,6 @@ const {
   SORT_VALUES,
   STATUS_VALUES,
   getHomePreviewData,
-  getHomepageData,
   getPublicPlaceBySlug,
   listNearbyPlaces,
   listPlanPlaces,
@@ -17,9 +16,13 @@ const router = express.Router();
 
 router.get("/", async (req, res, next) => {
   try {
-    const { planPreviewPlaces } = await getHomepageData();
+    const availableTags = await listPublicTags();
+    const groupedTags = getGroupedTags(availableTags);
+    const categoryTagGroup = groupedTags.find((group) => group.key === "category") || null;
+    const menuTagGroup = groupedTags.find((group) => group.key === "menu_items") || null;
 
     res.render("home", {
+      categoryTagGroup,
       extraHead: `
     <link
       rel="stylesheet"
@@ -27,8 +30,8 @@ router.get("/", async (req, res, next) => {
       integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
       crossorigin=""
     />`,
-      pageTitle: "Gluten Avoider",
-      planPreviewPlaces
+      menuTagGroup,
+      pageTitle: "Gluten Avoider"
     });
   } catch (error) {
     next(error);
