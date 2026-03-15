@@ -9,7 +9,7 @@
     <a class="button button--secondary" href="/admin/places">Back to places</a>
   </div>
 
-  <form class="stack-form" method="post" action="<%= formAction %>">
+  <form class="stack-form admin-place-form" method="post" action="<%= formAction %>">
     <% if (formError) { %>
       <p class="form-message form-message--error"><%= formError %></p>
     <% } %>
@@ -19,157 +19,163 @@
       <a class="button button--secondary" href="/admin/places">Cancel</a>
     </div>
 
-    <section class="geo-panel">
-      <p class="eyebrow">Quick capture</p>
-      <label class="form-grid__full">
-        Apple Maps or Google Maps share link
-        <input type="text" name="share_url" value="<%= formData.share_url %>" placeholder="Paste a map share link to auto-fill the place" />
-        <span class="field-help">The app will try to pull in the name, address, suburb, and coordinates from the link.</span>
-        <% if (errors.share_url) { %><span class="field-error"><%= errors.share_url %></span><% } %>
-      </label>
-    </section>
-
-    <label>
-      Status
-      <select name="status">
-        <% STATUS_VALUES.forEach((status) => { %>
-          <option value="<%= status %>" <%= formData.status === status ? "selected" : "" %>><%= formatStatus(status) %></option>
-        <% }) %>
-      </select>
-      <% if (errors.status) { %><span class="field-error"><%= errors.status %></span><% } %>
-    </label>
-
-    <% groupedTags.forEach((group) => { %>
-      <% const initialNewTags = Array.isArray(formData.new_tags[group.key]) ? formData.new_tags[group.key] : String(formData.new_tags[group.key] || "").split(",").map((entry) => entry.trim()).filter(Boolean); %>
-      <% const initialSelectedTags = group.tags.filter((tag) => formData.tag_ids.includes(String(tag.id))); %>
-      <fieldset
-        class="tag-picker"
-        data-group-key="<%= group.key %>"
-        data-tag-limit="3"
-        data-existing-tags='<%- JSON.stringify(group.tags.map((tag) => ({ id: String(tag.id), name: tag.name }))) %>'
-      >
-        <legend><%= group.label %></legend>
-        <p class="section-copy"><%= group.question %></p>
-
-        <div class="tag-picker__selected" data-selected-tags>
-          <% initialSelectedTags.forEach((tag) => { %>
-            <button class="tag-picker__chip" type="button" data-existing-id="<%= tag.id %>">
-              <span><%= tag.name %></span>
-              <strong aria-hidden="true">×</strong>
-            </button>
-          <% }) %>
-
-          <% initialNewTags.forEach((tagName) => { %>
-            <button class="tag-picker__chip tag-picker__chip--new" type="button" data-new-tag="<%= tagName %>">
-              <span><%= tagName %></span>
-              <strong aria-hidden="true">×</strong>
-            </button>
-          <% }) %>
-        </div>
-
-        <div class="tag-picker__input-row">
-          <input type="text" list="tag-options-<%= group.key %>" data-tag-input placeholder="Start typing an existing tag or add a new one" />
-          <button class="button button--secondary" type="button" data-add-tag>Add tag</button>
-        </div>
-
-        <datalist id="tag-options-<%= group.key %>">
-          <% group.tags.forEach((tag) => { %>
-            <option value="<%= tag.name %>"></option>
-          <% }) %>
-        </datalist>
-
-        <span class="field-help">Up to 3 tags in this group. Existing tags are suggested as you type.</span>
-        <span class="field-error" data-tag-error hidden></span>
-
-        <div data-hidden-existing>
-          <% initialSelectedTags.forEach((tag) => { %>
-            <input type="hidden" name="tag_ids" value="<%= tag.id %>" data-existing-input="<%= tag.id %>" />
-          <% }) %>
-        </div>
-        <input type="hidden" name="new_tags[<%= group.key %>]" value="<%= initialNewTags.join(", ") %>" data-new-tags-hidden />
-      </fieldset>
-    <% }) %>
-
-    <label>
-      Public notes
-      <textarea name="notes_public" rows="5"><%= formData.notes_public %></textarea>
-    </label>
-
-    <label>
-      Opening hours
-      <textarea
-        name="opening_hours_text"
-        rows="16"
-        placeholder="Friday&#10;12-2 pm&#10;5-10 pm&#10;&#10;Saturday&#10;Open 24 hours&#10;&#10;Sunday&#10;Closed"
-      ><%= formData.opening_hours_text %></textarea>
-      <span class="field-help">Paste one day heading followed by one or more service lines. Supports split lunch and dinner services, overnight closes, and Open 24 hours.</span>
-      <% if (errors.opening_hours_text) { %><span class="field-error"><%= errors.opening_hours_text %></span><% } %>
-    </label>
-
-    <section class="detail-block">
-      <div class="section-heading">
-        <div>
-          <p class="eyebrow">Manual details</p>
-          <h2>Fill these in now or later</h2>
-        </div>
-      </div>
-
-      <div class="form-grid">
-        <label>
-          Name
-          <input type="text" name="name" value="<%= formData.name %>" />
-          <% if (errors.name) { %><span class="field-error"><%= errors.name %></span><% } %>
-        </label>
-
-        <label class="form-grid__full">
-          Location / address / Plus Code
-          <input type="text" name="address" value="<%= formData.address %>" placeholder="e.g. 4694+3G Haymarket, New South Wales" />
-        </label>
-
-        <label>
-          Suburb
-          <input type="text" name="suburb" value="<%= formData.suburb %>" placeholder="Optional" />
-        </label>
-
-        <label>
-          Menu URL
-          <input type="text" name="website_url" value="<%= formData.website_url %>" placeholder="https://..." />
-          <% if (errors.website_url) { %><span class="field-error"><%= errors.website_url %></span><% } %>
-        </label>
-
-        <div class="form-grid__full geo-panel">
-          <div class="geo-panel__copy">
-            <strong>Coordinates</strong>
-            <p class="section-copy">If you are at the venue, use your current location to fill latitude and longitude quickly. Browser location on a live site usually needs HTTPS.</p>
-          </div>
-          <div class="geo-panel__controls">
-            <label>
-              Latitude
-              <input type="text" id="latitude-input" name="latitude" value="<%= formData.latitude %>" placeholder="Optional" />
-              <% if (errors.latitude) { %><span class="field-error"><%= errors.latitude %></span><% } %>
-            </label>
-            <label>
-              Longitude
-              <input type="text" id="longitude-input" name="longitude" value="<%= formData.longitude %>" placeholder="Optional" />
-              <% if (errors.longitude) { %><span class="field-error"><%= errors.longitude %></span><% } %>
-            </label>
-            <button class="button button--secondary" type="button" id="use-current-location">Use current location</button>
-          </div>
-        </div>
-
-        <div class="form-check-row form-grid__full">
-          <label class="checkbox-label">
-            <input type="checkbox" name="is_public" value="1" <%= formData.is_public ? "checked" : "" %> />
-            Public
+    <div class="admin-place-form__layout">
+      <div class="admin-place-form__main">
+        <section class="geo-panel">
+          <p class="eyebrow">Quick capture</p>
+          <label class="form-grid__full">
+            Apple Maps or Google Maps share link
+            <input type="text" name="share_url" value="<%= formData.share_url %>" placeholder="Paste a map share link to auto-fill the place" />
+            <span class="field-help">The app will try to pull in the name, address, suburb, and coordinates from the link.</span>
+            <% if (errors.share_url) { %><span class="field-error"><%= errors.share_url %></span><% } %>
           </label>
-        </div>
-      </div>
-    </section>
+        </section>
 
-    <label>
-      Private notes
-      <textarea name="notes_private" rows="5"><%= formData.notes_private %></textarea>
-    </label>
+        <label>
+          Status
+          <select name="status">
+            <% STATUS_VALUES.forEach((status) => { %>
+              <option value="<%= status %>" <%= formData.status === status ? "selected" : "" %>><%= formatStatus(status) %></option>
+            <% }) %>
+          </select>
+          <% if (errors.status) { %><span class="field-error"><%= errors.status %></span><% } %>
+        </label>
+
+        <% groupedTags.forEach((group) => { %>
+          <% const initialNewTags = Array.isArray(formData.new_tags[group.key]) ? formData.new_tags[group.key] : String(formData.new_tags[group.key] || "").split(",").map((entry) => entry.trim()).filter(Boolean); %>
+          <% const initialSelectedTags = group.tags.filter((tag) => formData.tag_ids.includes(String(tag.id))); %>
+          <fieldset
+            class="tag-picker"
+            data-group-key="<%= group.key %>"
+            data-tag-limit="3"
+            data-existing-tags='<%- JSON.stringify(group.tags.map((tag) => ({ id: String(tag.id), name: tag.name }))) %>'
+          >
+            <legend><%= group.label %></legend>
+            <p class="section-copy"><%= group.question %></p>
+
+            <div class="tag-picker__selected" data-selected-tags>
+              <% initialSelectedTags.forEach((tag) => { %>
+                <button class="tag-picker__chip" type="button" data-existing-id="<%= tag.id %>">
+                  <span><%= tag.name %></span>
+                  <strong aria-hidden="true">×</strong>
+                </button>
+              <% }) %>
+
+              <% initialNewTags.forEach((tagName) => { %>
+                <button class="tag-picker__chip tag-picker__chip--new" type="button" data-new-tag="<%= tagName %>">
+                  <span><%= tagName %></span>
+                  <strong aria-hidden="true">×</strong>
+                </button>
+              <% }) %>
+            </div>
+
+            <div class="tag-picker__input-row">
+              <input type="text" list="tag-options-<%= group.key %>" data-tag-input placeholder="Start typing an existing tag or add a new one" />
+              <button class="button button--secondary" type="button" data-add-tag>Add tag</button>
+            </div>
+
+            <datalist id="tag-options-<%= group.key %>">
+              <% group.tags.forEach((tag) => { %>
+                <option value="<%= tag.name %>"></option>
+              <% }) %>
+            </datalist>
+
+            <span class="field-help">Up to 3 tags in this group. Existing tags are suggested as you type.</span>
+            <span class="field-error" data-tag-error hidden></span>
+
+            <div data-hidden-existing>
+              <% initialSelectedTags.forEach((tag) => { %>
+                <input type="hidden" name="tag_ids" value="<%= tag.id %>" data-existing-input="<%= tag.id %>" />
+              <% }) %>
+            </div>
+            <input type="hidden" name="new_tags[<%= group.key %>]" value="<%= initialNewTags.join(", ") %>" data-new-tags-hidden />
+          </fieldset>
+        <% }) %>
+
+        <label>
+          Public notes
+          <textarea name="notes_public" rows="7"><%= formData.notes_public %></textarea>
+        </label>
+      </div>
+
+      <aside class="admin-place-form__side">
+        <label class="admin-place-form__panel">
+          Opening hours
+          <textarea
+            name="opening_hours_text"
+            rows="16"
+            placeholder="Friday&#10;12-2 pm&#10;5-10 pm&#10;&#10;Saturday&#10;Open 24 hours&#10;&#10;Sunday&#10;Closed"
+          ><%= formData.opening_hours_text %></textarea>
+          <span class="field-help">Paste one day heading followed by one or more service lines. Supports split lunch and dinner services, overnight closes, and Open 24 hours.</span>
+          <% if (errors.opening_hours_text) { %><span class="field-error"><%= errors.opening_hours_text %></span><% } %>
+        </label>
+
+        <section class="detail-block admin-place-form__panel">
+          <div class="section-heading">
+            <div>
+              <p class="eyebrow">Manual details</p>
+              <h2>Fill these in now or later</h2>
+            </div>
+          </div>
+
+          <div class="form-grid">
+            <label>
+              Name
+              <input type="text" name="name" value="<%= formData.name %>" />
+              <% if (errors.name) { %><span class="field-error"><%= errors.name %></span><% } %>
+            </label>
+
+            <label class="form-grid__full">
+              Location / address / Plus Code
+              <input type="text" name="address" value="<%= formData.address %>" placeholder="e.g. 4694+3G Haymarket, New South Wales" />
+            </label>
+
+            <label>
+              Suburb
+              <input type="text" name="suburb" value="<%= formData.suburb %>" placeholder="Optional" />
+            </label>
+
+            <label>
+              Menu URL
+              <input type="text" name="website_url" value="<%= formData.website_url %>" placeholder="https://..." />
+              <% if (errors.website_url) { %><span class="field-error"><%= errors.website_url %></span><% } %>
+            </label>
+
+            <div class="form-grid__full geo-panel">
+              <div class="geo-panel__copy">
+                <strong>Coordinates</strong>
+                <p class="section-copy">If you are at the venue, use your current location to fill latitude and longitude quickly. Browser location on a live site usually needs HTTPS.</p>
+              </div>
+              <div class="geo-panel__controls">
+                <label>
+                  Latitude
+                  <input type="text" id="latitude-input" name="latitude" value="<%= formData.latitude %>" placeholder="Optional" />
+                  <% if (errors.latitude) { %><span class="field-error"><%= errors.latitude %></span><% } %>
+                </label>
+                <label>
+                  Longitude
+                  <input type="text" id="longitude-input" name="longitude" value="<%= formData.longitude %>" placeholder="Optional" />
+                  <% if (errors.longitude) { %><span class="field-error"><%= errors.longitude %></span><% } %>
+                </label>
+                <button class="button button--secondary" type="button" id="use-current-location">Use current location</button>
+              </div>
+            </div>
+
+            <div class="form-check-row form-grid__full">
+              <label class="checkbox-label">
+                <input type="checkbox" name="is_public" value="1" <%= formData.is_public ? "checked" : "" %> />
+                Public
+              </label>
+            </div>
+          </div>
+        </section>
+
+        <label class="admin-place-form__panel">
+          Private notes
+          <textarea name="notes_private" rows="7"><%= formData.notes_private %></textarea>
+        </label>
+      </aside>
+    </div>
 
     <div class="admin-actions">
       <button class="button" type="submit"><%= submitLabel %></button>

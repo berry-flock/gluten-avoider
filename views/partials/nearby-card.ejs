@@ -1,35 +1,32 @@
 <article class="place-card nearby-card">
-  <div class="place-card__top">
-    <div>
-      <h3 class="place-card__title">
-        <a href="/places/<%= place.slug %>"><%= place.name %></a>
-      </h3>
-      <p class="place-card__suburb"><%= place.suburb %></p>
-    </div>
-    <p class="nearby-distance"><%= place.distance_km.toFixed(1) %> km</p>
-  </div>
-
-  <div class="place-card__badges">
-    <span class="badge <%= badgeClass('status', place.status) %>"><%= formatStatus(place.status) %></span>
+  <div class="nearby-card__content">
+    <h3 class="place-card__title">
+      <a href="/places/<%= place.slug %>"><%= place.name %></a>
+    </h3>
+    <p class="place-card__suburb"><%= place.suburb %></p>
+    <p class="nearby-card__meta-line"><%= place.distance_km.toFixed(1) %> km away</p>
   </div>
 
   <% if (place.openSummary) { %>
-    <p class="hours-pill <%= isOpenNowClass(place.openSummary) %>"><%= place.openSummary.label %></p>
+    <p class="info-panel <%= place.openSummary.isOpen ? "info-panel--open" : "info-panel--closed" %>"><%= place.openSummary.label %></p>
   <% } %>
 
   <% const menuItems = tagsByGroup(place.tags, "menu_items"); %>
   <% if (menuItems.length) { %>
-    <div class="tag-row">
-      <% menuItems.slice(0, 5).forEach((tag) => { %>
-        <a class="tag-pill tag-pill--link" href="/nearby?lat=<%= encodeURIComponent(location.latitude) %>&lng=<%= encodeURIComponent(location.longitude) %>&tags=<%= encodeURIComponent(tag.slug) %>"><%= tag.name %></a>
-      <% }) %>
+    <div class="nearby-card__group">
+      <p class="nearby-card__label">On the menu</p>
+      <div class="nearby-card__menu-row">
+        <% menuItems.slice(0, 5).forEach((tag) => { %>
+          <span class="menu-chip"><%= tag.name %></span>
+        <% }) %>
+      </div>
     </div>
   <% } %>
 
-  <div class="card-inline-links">
-    <a class="text-link" href="/places/<%= place.slug %>">Open place page</a>
+  <div class="card-inline-links nearby-card__actions">
+    <a class="button-link-chip" href="/places/<%= place.slug %>">Open place page</a>
     <% if (place.website_url) { %>
-      <a class="text-link" href="<%= place.website_url %>" target="_blank" rel="noreferrer">Full menu</a>
+      <a class="button-link-chip button-link-chip--soft" href="<%= place.website_url %>" target="_blank" rel="noreferrer">Menu</a>
     <% } %>
   </div>
 </article>

@@ -57,8 +57,10 @@ router.get("/home/preview-data", async (req, res, next) => {
           .slice(0, 3),
         menuUrl: place.website_url || "",
         name: place.name,
+        notesPublic: place.notes_public || "",
         openSummary: place.openSummary,
         slug: place.slug,
+        status: place.status,
         suburb: place.suburb
       })),
       location: {
@@ -187,6 +189,7 @@ router.get("/plan", async (req, res, next) => {
     ]);
     const groupedTags = getGroupedTags(availableTags);
     const categoryTagGroup = groupedTags.find((group) => group.key === "category") || null;
+    const glutenTagGroup = groupedTags.find((group) => group.key === "gluten_features") || null;
     const menuTagGroup = groupedTags.find((group) => group.key === "menu_items") || null;
     const trustedPlaces = places.filter((place) => place.status === "trusted");
     const wantToTryPlaces = places.filter((place) => place.status === "want_to_try");
@@ -194,6 +197,7 @@ router.get("/plan", async (req, res, next) => {
     res.render("plan", {
       categoryTagGroup,
       filters,
+      glutenTagGroup,
       menuTagGroup,
       planStatusValues: PLAN_STATUS_VALUES,
       pageTitle: "Plan later",

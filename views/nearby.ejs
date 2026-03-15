@@ -52,9 +52,9 @@
 <% } else { %>
   <section class="nearby-layout">
     <div class="section-block nearby-results-panel">
-      <div class="section-heading">
+      <div class="section-heading section-heading--roomy">
         <div>
-          <h2><%= places.length %> nearby place<%= places.length === 1 ? "" : "s" %></h2>
+          <h2><span class="module-icon module-icon--pink"></span><%= places.length %> nearby place<%= places.length === 1 ? "" : "s" %></h2>
           <p class="section-copy">Open now and sorted by proximity, with trusted places first when distances are similar.</p>
         </div>
       </div>
@@ -71,11 +71,8 @@
     </div>
 
     <div class="section-block nearby-map-panel">
-      <div class="section-heading">
-        <div>
-          <h2>Map</h2>
-          <p class="section-copy">Current search origin: <%= location.latitude.toFixed(4) %>, <%= location.longitude.toFixed(4) %></p>
-        </div>
+      <div class="section-heading section-heading--roomy">
+        <h2><span class="module-icon module-icon--sky"></span>Map</h2>
       </div>
       <div id="nearby-map" class="nearby-map"></div>
     </div>

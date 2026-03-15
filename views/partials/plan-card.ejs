@@ -8,29 +8,54 @@
     </div>
   </div>
 
-  <div class="place-card__badges">
-    <span class="badge <%= badgeClass('status', place.status) %>"><%= formatStatus(place.status) %></span>
-  </div>
-
-  <% const menuItems = tagsByGroup(place.tags, "menu_items"); %>
-  <% if (menuItems.length) { %>
-    <p class="place-card__excerpt"><strong>Key menu items:</strong> <%= menuItems.slice(0, 3).map((tag) => tag.name).join(", ") %></p>
+  <% if (typeof showStatusBadge === "undefined" || showStatusBadge) { %>
+    <div class="place-card__badges">
+      <span class="badge <%= badgeClass('status', place.status) %>"><%= formatStatus(place.status) %></span>
+    </div>
   <% } %>
 
   <% if (selectedDay !== null && selectedDay !== undefined) { %>
-    <p class="hours-pill hours-pill--closed"><%= dayLabels[selectedDay] %>: <%= formatHoursForDay(place.openingHours, selectedDay) %></p>
+    <p class="hours-pill hours-pill--schedule"><%= dayLabels[selectedDay] %>: <%= formatHoursForDay(place.openingHours, selectedDay) %></p>
   <% } %>
 
-  <% if (place.tags && place.tags.length) { %>
-    <div class="tag-row">
-      <% place.tags.slice(0, 6).forEach((tag) => { %>
-        <a class="tag-pill tag-pill--link" href="/plan?tags=<%= encodeURIComponent(tag.slug) %>"><%= tag.name %></a>
-      <% }) %>
+  <% const categoryTags = tagsByGroup(place.tags, "category"); %>
+  <% if (categoryTags.length) { %>
+    <div class="plan-card__group">
+      <p class="plan-card__label">Occasion</p>
+      <div class="tag-row">
+        <% categoryTags.slice(0, 4).forEach((tag) => { %>
+          <a class="tag-pill tag-pill--link" href="/plan?tags=<%= encodeURIComponent(tag.slug) %>"><%= tag.name %></a>
+        <% }) %>
+      </div>
+    </div>
+  <% } %>
+
+  <% const menuItems = tagsByGroup(place.tags, "menu_items"); %>
+  <% if (menuItems.length) { %>
+    <div class="plan-card__group">
+      <p class="plan-card__label">Food</p>
+      <div class="tag-row">
+        <% menuItems.slice(0, 5).forEach((tag) => { %>
+          <a class="tag-pill tag-pill--link" href="/plan?tags=<%= encodeURIComponent(tag.slug) %>"><%= tag.name %></a>
+        <% }) %>
+      </div>
+    </div>
+  <% } %>
+
+  <% const glutenTags = tagsByGroup(place.tags, "gluten_features"); %>
+  <% if (glutenTags.length) { %>
+    <div class="plan-card__group">
+      <p class="plan-card__label">GF support</p>
+      <div class="tag-row">
+        <% glutenTags.slice(0, 4).forEach((tag) => { %>
+          <a class="tag-pill tag-pill--link" href="/plan?tags=<%= encodeURIComponent(tag.slug) %>"><%= tag.name %></a>
+        <% }) %>
+      </div>
     </div>
   <% } %>
 
   <% if (place.notes_public) { %>
-    <p class="place-card__excerpt"><%= excerpt(place.notes_public, 140) %></p>
+    <p class="place-card__excerpt"><%= excerpt(place.notes_public, 220) %></p>
   <% } %>
 
   <a class="text-link" href="/places/<%= place.slug %>">View details</a>

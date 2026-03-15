@@ -13,25 +13,25 @@
 
   <p class="section-copy">This is the private admin area for managing the notebook. Places and tags can both be managed here.</p>
 
-  <div class="admin-stats-grid">
-    <article class="stat-card">
-      <h2><%= stats.place_count %></h2>
-      <p>Saved places</p>
-    </article>
-    <article class="stat-card">
-      <h2><%= stats.public_place_count %></h2>
-      <p>Public places</p>
-    </article>
-    <article class="stat-card">
-      <h2><%= stats.tag_count %></h2>
-      <p>Tags</p>
-    </article>
-  </div>
-
   <div class="admin-links">
     <a class="button" href="/admin/places">Manage places</a>
     <a class="button" href="/admin/tags">Manage tags</a>
     <a class="button" href="/places">View public browse</a>
+  </div>
+
+  <div class="admin-summary-row">
+    <article class="stat-pill">
+      <strong><%= stats.place_count %></strong>
+      <span>Saved places</span>
+    </article>
+    <article class="stat-pill">
+      <strong><%= stats.public_place_count %></strong>
+      <span>Public places</span>
+    </article>
+    <article class="stat-pill">
+      <strong><%= stats.tag_count %></strong>
+      <span>Tags</span>
+    </article>
   </div>
 </section>
 

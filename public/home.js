@@ -46,22 +46,20 @@ function renderNearbyPreview(places) {
     return;
   }
 
-  nearbyPreviewElement.innerHTML = places.map((place) => `
-    <article class="place-card place-card--compact">
-      <div class="place-card__top">
-        <div>
-          <h3 class="place-card__title"><a href="/places/${encodeURIComponent(place.slug)}">${escapeHtml(place.name)}</a></h3>
-          <p class="place-card__suburb">${escapeHtml(place.suburb || "")}</p>
-        </div>
+  nearbyPreviewElement.innerHTML = `<div class="home-preview-list">${places.map((place) => `
+    <article class="place-card place-card--compact nearby-card">
+      <div class="nearby-card__content">
+        <h3 class="place-card__title"><a href="/places/${encodeURIComponent(place.slug)}">${escapeHtml(place.name)}</a></h3>
+        <p class="place-card__suburb">${escapeHtml(place.suburb || "")}</p>
       </div>
-      ${place.openSummary ? `<p class="hours-pill ${place.openSummary.isOpen ? "hours-pill--open" : "hours-pill--closed"}">${escapeHtml(place.openSummary.label)}</p>` : ""}
-      ${place.menuItems.length ? `<p class="place-card__excerpt"><strong>Key menu items:</strong> ${escapeHtml(place.menuItems.map((tag) => tag.name).join(", "))}</p>` : ""}
-      <div class="card-inline-links">
-        <a class="text-link" href="/places/${encodeURIComponent(place.slug)}">Open place page</a>
-        ${place.menuUrl ? `<a class="text-link" href="${escapeHtml(place.menuUrl)}" target="_blank" rel="noreferrer">Menu</a>` : ""}
+      ${place.openSummary ? `<p class="info-panel ${place.openSummary.isOpen ? "info-panel--open" : "info-panel--closed"}">${escapeHtml(place.openSummary.label)}</p>` : ""}
+      ${place.menuItems.length ? `<div class="nearby-card__group"><p class="nearby-card__label">On the menu</p><div class="nearby-card__menu-row">${place.menuItems.map((tag) => `<span class="menu-chip">${escapeHtml(tag.name)}</span>`).join("")}</div></div>` : ""}
+      <div class="card-inline-links nearby-card__actions">
+        <a class="button-link-chip" href="/places/${encodeURIComponent(place.slug)}">Open place page</a>
+        ${place.menuUrl ? `<a class="button-link-chip button-link-chip--soft" href="${escapeHtml(place.menuUrl)}" target="_blank" rel="noreferrer">Menu</a>` : ""}
       </div>
     </article>
-  `).join("");
+  `).join("")}</div>`;
 }
 
 function renderHomeMap(payload) {
@@ -72,8 +70,8 @@ function renderHomeMap(payload) {
 
   const map = window.L.map("home-map");
 
-  window.L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-    attribution: "&copy; OpenStreetMap contributors"
+  window.L.tileLayer("https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png", {
+    attribution: '&copy; OpenStreetMap contributors &copy; CARTO'
   }).addTo(map);
 
   const userLatLng = [payload.location.latitude, payload.location.longitude];
@@ -115,4 +113,12 @@ function geolocationErrorMessage(error) {
 
   const label = codeMap[error.code] || `Error code ${error.code}`;
   return `${label}${error.message ? `: ${error.message}` : ""}`;
+}
+
+function formatStatus(value) {
+  return String(value || "")
+    .split("_")
+    .filter(Boolean)
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(" ");
 }
