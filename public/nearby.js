@@ -42,7 +42,6 @@ if (nearbyLocationButton && nearbyLatInput && nearbyLngInput) {
 
     nearbyLocationButton.disabled = true;
     nearbyLocationButton.textContent = "Getting location...";
-    setLocationMessage("Requesting your current location...");
 
     navigator.geolocation.getCurrentPosition(
       (position) => {
@@ -50,7 +49,6 @@ if (nearbyLocationButton && nearbyLatInput && nearbyLngInput) {
         nearbyLngInput.value = position.coords.longitude.toFixed(6);
         nearbyLocationButton.disabled = false;
         nearbyLocationButton.textContent = "Use my current location";
-        setLocationMessage(`Location found at ${nearbyLatInput.value}, ${nearbyLngInput.value}.`);
         nearbyLatInput.form.submit();
       },
       (error) => {
@@ -65,10 +63,6 @@ if (nearbyLocationButton && nearbyLatInput && nearbyLngInput) {
       }
     );
   });
-}
-
-if (nearbyLocationHelp && geolocationNeedsHttps()) {
-  setLocationMessage("Current location on the live site needs HTTPS. For now, use testing coordinates or add a domain with SSL.");
 }
 
 if (

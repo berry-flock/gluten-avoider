@@ -14,15 +14,17 @@
 <section class="section-block">
   <div class="section-heading section-heading--roomy">
     <div>
-      <h2><%= mappablePlaces.length %> matching place<%= mappablePlaces.length === 1 ? "" : "s" %></h2>
+      <h2><span id="map-results-count"><%= mappablePlaces.length %></span> matching place<%= mappablePlaces.length === 1 ? "" : "s" %></h2>
       <p class="section-copy"><%= placesWithoutCoordinates %> saved place<%= placesWithoutCoordinates === 1 ? "" : "s" %> are not shown because they do not have coordinates yet.</p>
     </div>
   </div>
 
   <% if (mappablePlaces.length) { %>
-    <div class="card-grid">
+    <div class="card-grid" id="map-result-cards">
       <% mappablePlaces.forEach((place) => { %>
-        <%- include("partials/place-card", { place }) %>
+        <div class="map-result-card" data-map-card data-slug="<%= place.slug %>" data-lat="<%= Number(place.latitude) %>" data-lng="<%= Number(place.longitude) %>">
+          <%- include("partials/place-card", { place }) %>
+        </div>
       <% }) %>
     </div>
   <% } else { %>

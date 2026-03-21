@@ -49,15 +49,14 @@ function renderNearbyPreview(places) {
   nearbyPreviewElement.innerHTML = `<div class="home-preview-list">${places.map((place) => `
     <article class="place-card place-card--compact nearby-card">
       <div class="nearby-card__content">
-        <h3 class="place-card__title"><a href="/places/${encodeURIComponent(place.slug)}">${escapeHtml(place.name)}</a></h3>
+        <div class="place-card__title-row">
+          <h3 class="place-card__title"><a class="place-card__primary-link" href="/places/${encodeURIComponent(place.slug)}">${escapeHtml(place.name)}</a></h3>
+          ${place.menuUrl ? `<a class="menu-link" href="${escapeHtml(place.menuUrl)}" target="_blank" rel="noreferrer"><span class="menu-link__icon" aria-hidden="true"></span><span class="sr-only">Menu</span></a>` : ""}
+        </div>
         <p class="place-card__suburb">${escapeHtml(place.suburb || "")}</p>
       </div>
-      ${place.openSummary ? `<p class="info-panel ${place.openSummary.isOpen ? "info-panel--open" : "info-panel--closed"}">${escapeHtml(place.openSummary.label)}</p>` : ""}
+      ${place.openSummary ? `<p class="nearby-status-line">${escapeHtml(compactOpenLabel(place.openSummary.label))}</p>` : ""}
       ${place.menuItems.length ? `<div class="nearby-card__group"><p class="nearby-card__label">On the menu</p><div class="nearby-card__menu-row">${place.menuItems.map((tag) => `<span class="menu-chip">${escapeHtml(tag.name)}</span>`).join("")}</div></div>` : ""}
-      <div class="card-inline-links nearby-card__actions">
-        <a class="button-link-chip" href="/places/${encodeURIComponent(place.slug)}">Open place page</a>
-        ${place.menuUrl ? `<a class="button-link-chip button-link-chip--soft" href="${escapeHtml(place.menuUrl)}" target="_blank" rel="noreferrer">Menu</a>` : ""}
-      </div>
     </article>
   `).join("")}</div>`;
 }
@@ -87,7 +86,7 @@ function renderHomeMap(payload) {
     bounds.push([place.lat, place.lng]);
   });
 
-  map.fitBounds(bounds, { padding: [24, 24], maxZoom: 14 });
+  map.fitBounds(bounds, { padding: [20, 20], maxZoom: 16 });
   mapMessageElement.textContent = "Showing saved places around your current location.";
 }
 
@@ -121,4 +120,8 @@ function formatStatus(value) {
     .filter(Boolean)
     .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
     .join(" ");
+}
+
+function compactOpenLabel(label) {
+  return String(label || "").replace(/^Open now\s+/i, "");
 }

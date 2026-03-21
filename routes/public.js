@@ -16,13 +16,8 @@ const router = express.Router();
 
 router.get("/", async (req, res, next) => {
   try {
-    const availableTags = await listPublicTags();
-    const groupedTags = getGroupedTags(availableTags);
-    const categoryTagGroup = groupedTags.find((group) => group.key === "category") || null;
-    const menuTagGroup = groupedTags.find((group) => group.key === "menu_items") || null;
-
     res.render("home", {
-      categoryTagGroup,
+      defaultPlanDay: new Date().getDay(),
       extraHead: `
     <link
       rel="stylesheet"
@@ -30,7 +25,6 @@ router.get("/", async (req, res, next) => {
       integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
       crossorigin=""
     />`,
-      menuTagGroup,
       pageTitle: "Gluten Avoider"
     });
   } catch (error) {
@@ -153,11 +147,7 @@ router.get("/map/view", async (req, res, next) => {
 
 router.get("/nearby", async (req, res, next) => {
   try {
-    const [{ filters, location, places }, availableTags] = await Promise.all([
-      listNearbyPlaces(req.query),
-      listPublicTags()
-    ]);
-    const menuTagGroup = getGroupedTags(availableTags).find((group) => group.key === "menu_items") || null;
+    const { filters, location, places } = await listNearbyPlaces(req.query);
 
     res.render("nearby", {
       extraHead: location.hasCoordinates
@@ -171,7 +161,6 @@ router.get("/nearby", async (req, res, next) => {
         : "",
       filters,
       location,
-      menuTagGroup,
       pageTitle: "Nearby now",
       places,
       statusValues: STATUS_VALUES.filter((status) => status !== "avoid")
@@ -191,8 +180,9 @@ router.get("/plan", async (req, res, next) => {
     const categoryTagGroup = groupedTags.find((group) => group.key === "category") || null;
     const glutenTagGroup = groupedTags.find((group) => group.key === "gluten_features") || null;
     const menuTagGroup = groupedTags.find((group) => group.key === "menu_items") || null;
-    const trustedPlaces = places.filter((place) => place.status === "trusted");
-    const wantToTryPlaces = places.filter((place) => place.status === "want_to_try");
+    const filteredPlaces = filterPlanPlacesByTagGroups(places, filters.tags, availableTags);
+    const trustedPlaces = filteredPlaces.filter((place) => place.status === "trusted");
+    const wantToTryPlaces = filteredPlaces.filter((place) => place.status === "want_to_try");
 
     res.render("plan", {
       categoryTagGroup,
@@ -210,3 +200,36 @@ router.get("/plan", async (req, res, next) => {
 });
 
 module.exports = router;
+
+function filterPlanPlacesByTagGroups(places, selectedTagSlugs, availableTags) {
+  if (!selectedTagSlugs.length) {
+    return places;
+  }
+
+  const tagsBySlug = new Map(availableTags.map((tag) => [tag.slug, tag]));
+  const selectedGroups = {
+    category: [],
+    gluten_features: [],
+    menu_items: []
+  };
+
+  for (const slug of selectedTagSlugs) {
+    const tag = tagsBySlug.get(slug);
+
+    if (tag && selectedGroups[tag.tag_group]) {
+      selectedGroups[tag.tag_group].push(slug);
+    }
+  }
+
+  return places.filter((place) => {
+    const placeTagSlugs = new Set((place.tags || []).map((tag) => tag.slug));
+
+    return Object.entries(selectedGroups).every(([, groupSlugs]) => {
+      if (!groupSlugs.length) {
+        return true;
+      }
+
+      return groupSlugs.some((slug) => placeTagSlugs.has(slug));
+    });
+  });
+}

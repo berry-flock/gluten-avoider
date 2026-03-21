@@ -1,14 +1,19 @@
 <article class="place-card nearby-card">
   <div class="nearby-card__content">
-    <h3 class="place-card__title">
-      <a href="/places/<%= place.slug %>"><%= place.name %></a>
-    </h3>
+    <div class="place-card__title-row">
+      <h3 class="place-card__title">
+        <a class="place-card__primary-link" href="/places/<%= place.slug %>"><%= place.name %></a>
+      </h3>
+      <% if (place.website_url) { %>
+        <a class="menu-link" href="<%= place.website_url %>" target="_blank" rel="noreferrer"><span class="menu-link__icon" aria-hidden="true"></span><span class="sr-only">Menu</span></a>
+      <% } %>
+    </div>
     <p class="place-card__suburb"><%= place.suburb %></p>
     <p class="nearby-card__meta-line"><%= place.distance_km.toFixed(1) %> km away</p>
   </div>
 
   <% if (place.openSummary) { %>
-    <p class="info-panel <%= place.openSummary.isOpen ? "info-panel--open" : "info-panel--closed" %>"><%= place.openSummary.label %></p>
+    <p class="nearby-status-line"><%= place.openSummary.label.replace(/^Open now\s+/i, "") %></p>
   <% } %>
 
   <% const menuItems = tagsByGroup(place.tags, "menu_items"); %>
@@ -23,10 +28,4 @@
     </div>
   <% } %>
 
-  <div class="card-inline-links nearby-card__actions">
-    <a class="button-link-chip" href="/places/<%= place.slug %>">Open place page</a>
-    <% if (place.website_url) { %>
-      <a class="button-link-chip button-link-chip--soft" href="<%= place.website_url %>" target="_blank" rel="noreferrer">Menu</a>
-    <% } %>
-  </div>
 </article>

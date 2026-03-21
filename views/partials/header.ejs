@@ -15,9 +15,9 @@
       <div class="shell site-header__inner">
         <a class="site-title" href="/">Gluten Avoider</a>
         <nav class="site-nav">
-          <% if (!currentAdmin) { %>
-            <a href="/admin/login">Login</a>
-          <% } %>
+          <a class="site-nav__link" href="/nearby"><span class="module-icon module-icon--pink"></span><span>Nearby</span></a>
+          <a class="site-nav__link" href="/plan"><span class="module-icon module-icon--yellow"></span><span>Plan</span></a>
+          <a class="site-nav__link" href="<%= currentAdmin ? "/admin" : "/admin/login" %>"><span class="module-icon module-icon--lavender"></span><span><%= currentAdmin ? "Admin" : "Login" %></span></a>
         </nav>
       </div>
     </header>

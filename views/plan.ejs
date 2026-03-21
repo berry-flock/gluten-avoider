@@ -1,8 +1,15 @@
 <%- include("partials/header") %>
 
-<section class="section-block">
+<section class="section-block" id="plan-filters">
   <form class="filters-panel" method="get" action="/plan">
     <div class="filters-grid">
+      <label class="form-grid__full">
+        Search
+        <div class="compact-search-form">
+          <input type="text" name="search" value="<%= filters.search %>" placeholder="Search places, suburbs, or notes" />
+          <button class="button" type="submit">Search</button>
+        </div>
+      </label>
       <label>
         What day are you dining?
         <select name="day">
@@ -75,11 +82,10 @@
 </section>
 
 <% if (filters.statusPreference !== "want_to_try") { %>
-  <section class="section-block">
+  <section class="section-block" id="plan-results">
     <div class="section-heading section-heading--roomy">
       <div>
         <h2><span class="module-icon module-icon--mint"></span>Your regulars</h2>
-        <p class="section-copy">Trusted places you already know and can plan around.</p>
       </div>
     </div>
 
@@ -100,7 +106,6 @@
     <div class="section-heading section-heading--roomy">
       <div>
         <h2><span class="module-icon module-icon--pink"></span>Somewhere new</h2>
-        <p class="section-copy">Places still on your list to try for that next dinner plan.</p>
       </div>
     </div>
 
@@ -115,5 +120,7 @@
     <% } %>
   </section>
 <% } %>
+
+<script src="/plan.js"></script>
 
 <%- include("partials/footer") %>

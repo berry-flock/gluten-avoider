@@ -106,7 +106,13 @@ async function listNearbyPlaces(rawQuery = {}) {
 async function listPlanPlaces(rawQuery = {}) {
   const filters = normalizePlanFilters(rawQuery);
 
-  const places = await queryPublicPlaces(filters, getPlanOrderByClause());
+  const places = await queryPublicPlaces(
+    {
+      ...filters,
+      tags: []
+    },
+    getPlanOrderByClause()
+  );
 
   await attachTags(places);
   await attachOpeningHours(places);
@@ -159,7 +165,7 @@ async function getHomePreviewData(rawQuery = {}) {
       )
     }))
     .sort((left, right) => left.distance_km - right.distance_km)
-    .slice(0, 12);
+    .slice(0, 8);
 
   return {
     location,
