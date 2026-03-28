@@ -6,8 +6,23 @@
       <p class="eyebrow">Map</p>
       <h1><span class="module-icon module-icon--sky"></span>Browse saved places on the map</h1>
     </div>
-    <a class="button button--secondary" href="/places">Browse and search</a>
+    <a class="button button--secondary" href="/plan">Browse and search</a>
   </div>
+  <div class="filters-actions map-filter-bar">
+    <% mapAvailabilityValues.forEach((value) => { %>
+      <a class="button <%= filters.availability === value ? "" : "button--secondary" %>" href="/map/view?availability=<%= encodeURIComponent(value) %><%= filters.suburb ? `&suburb=${encodeURIComponent(filters.suburb)}` : "" %>"><%= value %></a>
+    <% }) %>
+  </div>
+  <% if (suburbs.length) { %>
+    <div class="tag-row map-suburb-row">
+      <% suburbs.forEach((suburb) => { %>
+        <a class="button <%= filters.suburb === suburb ? "" : "button--secondary" %>" href="/map/view?availability=<%= encodeURIComponent(filters.availability) %>&suburb=<%= encodeURIComponent(suburb) %>"><%= suburb %></a>
+      <% }) %>
+      <% if (filters.suburb) { %>
+        <a class="button button--secondary" href="/map/view?availability=<%= encodeURIComponent(filters.availability) %>">Clear suburb</a>
+      <% } %>
+    </div>
+  <% } %>
   <div id="map-view" class="map-view-canvas"></div>
 </section>
 
@@ -15,7 +30,7 @@
   <div class="section-heading section-heading--roomy">
     <div>
       <h2><span id="map-results-count"><%= mappablePlaces.length %></span> matching place<%= mappablePlaces.length === 1 ? "" : "s" %></h2>
-      <p class="section-copy"><%= placesWithoutCoordinates %> saved place<%= placesWithoutCoordinates === 1 ? "" : "s" %> are not shown because they do not have coordinates yet.</p>
+      <p class="section-copy"><%= filters.availability %> results<%= filters.suburb ? ` in ${filters.suburb}` : "" %>.</p>
     </div>
   </div>
 
@@ -23,7 +38,7 @@
     <div class="card-grid" id="map-result-cards">
       <% mappablePlaces.forEach((place) => { %>
         <div class="map-result-card" data-map-card data-slug="<%= place.slug %>" data-lat="<%= Number(place.latitude) %>" data-lng="<%= Number(place.longitude) %>">
-          <%- include("partials/place-card", { place }) %>
+          <%- include("partials/plan-card", { place, selectedDay: filters.day }) %>
         </div>
       <% }) %>
     </div>
@@ -42,6 +57,7 @@
     lat: Number(place.latitude),
     lng: Number(place.longitude),
     name: place.name,
+    isOpen: Boolean(place.selectedAvailability && place.selectedAvailability.isOpen),
     slug: place.slug,
     suburb: place.suburb
   }))

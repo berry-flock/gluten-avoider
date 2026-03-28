@@ -1,5 +1,5 @@
 const { all, get } = require("./connection");
-const { attachOpenSummary } = require("../utils/opening-hours");
+const { attachOpenSummary, getAvailabilityAt, getOpenSummaryForSelection, parseTimeInput } = require("../utils/opening-hours");
 const { sortTagsForDisplay } = require("../utils/tag-groups");
 const { haversineDistanceKm } = require("../utils/distance");
 
@@ -7,6 +7,7 @@ const STATUS_VALUES = ["trusted", "want_to_try", "avoid"];
 const CONFIDENCE_VALUES = ["strong", "partial", "uncertain", "unknown"];
 const SORT_VALUES = ["recommended", "alphabetical", "recently_updated", "featured"];
 const PLAN_STATUS_VALUES = ["all", "trusted", "want_to_try"];
+const MAP_AVAILABILITY_VALUES = ["open", "lunch", "dinner"];
 
 function normalizeFilters(rawQuery = {}) {
   const search = typeof rawQuery.search === "string" ? rawQuery.search.trim() : "";
@@ -62,11 +63,7 @@ async function listPublicPlaces(rawQuery = {}) {
 }
 
 async function listNearbyPlaces(rawQuery = {}) {
-  const filters = {
-    ...normalizeFilters(rawQuery),
-    featuredOnly: false,
-    openNow: true
-  };
+  const filters = normalizeNearbyFilters(rawQuery);
   const location = normalizeLocation(rawQuery);
 
   if (!location.hasCoordinates) {
@@ -86,6 +83,12 @@ async function listNearbyPlaces(rawQuery = {}) {
     .filter((place) => hasCoordinates(place))
     .map((place) => ({
       ...place,
+      selectedAvailability: getOpenSummaryForSelection(
+        place.openingHours,
+        filters.day,
+        filters.timeMinutes,
+        { prefix: filters.meal === "lunch" ? "Open for lunch" : filters.meal === "dinner" ? "Open for dinner" : `Open at ${filters.timeLabel}` }
+      ),
       distance_km: haversineDistanceKm(
         location.latitude,
         location.longitude,
@@ -93,7 +96,7 @@ async function listNearbyPlaces(rawQuery = {}) {
         Number(place.longitude)
       )
     }))
-    .filter((place) => !filters.openNow || (place.openSummary && place.openSummary.isOpen))
+    .filter((place) => place.selectedAvailability && place.selectedAvailability.isOpen)
     .sort(compareNearbyPlaces);
 
   return {
@@ -105,6 +108,7 @@ async function listNearbyPlaces(rawQuery = {}) {
 
 async function listPlanPlaces(rawQuery = {}) {
   const filters = normalizePlanFilters(rawQuery);
+  const location = normalizeLocation(rawQuery);
 
   const places = await queryPublicPlaces(
     {
@@ -117,14 +121,42 @@ async function listPlanPlaces(rawQuery = {}) {
   await attachTags(places);
   await attachOpeningHours(places);
 
+  const filteredPlaces = places
+    .map((place) => {
+      const selectedAvailability = getOpenSummaryForSelection(
+        place.openingHours,
+        filters.day,
+        filters.timeMinutes,
+        { prefix: `Open at ${filters.timeLabel}` }
+      );
+      const distanceKm = location.hasCoordinates && hasCoordinates(place)
+        ? haversineDistanceKm(
+          location.latitude,
+          location.longitude,
+          Number(place.latitude),
+          Number(place.longitude)
+        )
+        : null;
+
+      return {
+        ...place,
+        distance_km: distanceKm,
+        selectedAvailability
+      };
+    })
+    .filter((place) => matchesPlanMeal(place.openingHours, filters))
+    .sort(comparePlanPlaces);
+
   return {
     filters,
-    places
+    location,
+    places: filteredPlaces
   };
 }
 
 async function getHomePreviewData(rawQuery = {}) {
   const location = normalizeLocation(rawQuery);
+  const mapFilters = normalizeMapFilters(rawQuery);
 
   if (!location.hasCoordinates) {
     return {
@@ -137,7 +169,9 @@ async function getHomePreviewData(rawQuery = {}) {
   const nearbyPlaces = (await listNearbyPlaces({
     lat: location.latitude,
     lng: location.longitude,
-    status: "trusted"
+    status: "trusted",
+    time: rawQuery.nearby_time,
+    meal: rawQuery.nearby_meal
   })).places.slice(0, 3);
 
   const allPlaces = await queryPublicPlaces({
@@ -157,6 +191,12 @@ async function getHomePreviewData(rawQuery = {}) {
     .filter((place) => hasCoordinates(place))
     .map((place) => ({
       ...place,
+      selectedAvailability: getOpenSummaryForSelection(
+        place.openingHours,
+        mapFilters.day,
+        mapFilters.previewTimeMinutes,
+        { prefix: `Open at ${mapFilters.previewTimeLabel}` }
+      ),
       distance_km: haversineDistanceKm(
         location.latitude,
         location.longitude,
@@ -164,14 +204,83 @@ async function getHomePreviewData(rawQuery = {}) {
         Number(place.longitude)
       )
     }))
+    .filter((place) => matchesMapAvailabilityMode(place.openingHours, mapFilters))
+    .filter((place) => !mapFilters.suburb || place.suburb === mapFilters.suburb)
     .sort((left, right) => left.distance_km - right.distance_km)
     .slice(0, 8);
 
   return {
+    filters: mapFilters,
     location,
     mapPlaces,
     nearbyPlaces
   };
+}
+
+async function listMapPlaces(rawQuery = {}) {
+  const filters = normalizeMapFilters(rawQuery);
+  const location = normalizeLocation(rawQuery);
+  const places = await queryPublicPlaces({
+    featuredOnly: false,
+    gfConfidence: "",
+    openNow: false,
+    search: "",
+    sort: "recommended",
+    status: "",
+    tags: []
+  }, getOrderByClause("recommended"));
+
+  await attachTags(places);
+  await attachOpeningHours(places);
+
+  const suburbs = collectSuburbs(places);
+  const filteredPlaces = places
+    .filter((place) => hasCoordinates(place))
+    .filter((place) => !filters.suburb || place.suburb === filters.suburb)
+    .filter((place) => matchesMapAvailabilityMode(place.openingHours, filters))
+    .map((place) => {
+      const selectedAvailability = getOpenSummaryForSelection(
+        place.openingHours,
+        filters.day,
+        filters.previewTimeMinutes,
+        { prefix: `Open at ${filters.previewTimeLabel}` }
+      );
+
+      return {
+        ...place,
+        distance_km: location.hasCoordinates && hasCoordinates(place)
+          ? haversineDistanceKm(
+            location.latitude,
+            location.longitude,
+            Number(place.latitude),
+            Number(place.longitude)
+          )
+          : null,
+        selectedAvailability
+      };
+    })
+    .sort(comparePlanPlaces);
+
+  return {
+    filters,
+    location,
+    places: filteredPlaces,
+    suburbs
+  };
+}
+
+async function listTopSuburbs(limit = 3) {
+  const rows = await all(
+    `SELECT suburb, COUNT(*) AS place_count
+     FROM places
+     WHERE is_public = 1 AND status != 'avoid' AND suburb IS NOT NULL AND suburb != ''
+     GROUP BY suburb
+     ORDER BY place_count DESC, suburb ASC
+     LIMIT ?`,
+    [limit]
+  );
+
+  return rows.map((row) => row.suburb);
 }
 
 async function getPublicPlaceBySlug(slug) {
@@ -415,9 +524,19 @@ function normalizeArray(value) {
 
 function normalizePlanFilters(rawQuery = {}) {
   const baseFilters = normalizeFilters(rawQuery);
+  const now = new Date();
+  const location = normalizeLocation(rawQuery);
   const day = Number.isInteger(Number(rawQuery.day)) && Number(rawQuery.day) >= 0 && Number(rawQuery.day) <= 6
     ? Number(rawQuery.day)
-    : 6;
+    : now.getDay();
+  const defaultMeal = now.getHours() < 11 ? "breakfast" : now.getHours() < 17 ? "lunch" : "dinner";
+  const meal = ["breakfast", "lunch", "dinner"].includes(rawQuery.meal) ? rawQuery.meal : defaultMeal;
+  const fallbackTime = meal === "breakfast"
+    ? "09:00"
+    : meal === "lunch"
+      ? "11:30"
+      : "17:00";
+  const parsedTime = parseTimeInput(rawQuery.time, fallbackTime);
   const statusPreference = PLAN_STATUS_VALUES.includes(rawQuery.status_preference)
     ? rawQuery.status_preference
     : "all";
@@ -426,11 +545,85 @@ function normalizePlanFilters(rawQuery = {}) {
     ...baseFilters,
     day,
     featuredOnly: false,
+    latitude: location.latitude,
+    longitude: location.longitude,
+    meal,
     openNow: false,
+    time: parsedTime.value,
+    timeLabel: parsedTime.value,
+    timeMinutes: parsedTime.minutes,
     sort: "recommended",
     status: statusPreference === "all" ? "" : statusPreference,
     statusPreference
   };
+}
+
+function normalizeNearbyFilters(rawQuery = {}) {
+  const now = new Date();
+  const meal = rawQuery.meal === "lunch" || rawQuery.meal === "dinner" ? rawQuery.meal : "";
+  const defaultTime = meal === "lunch" ? "11:30" : meal === "dinner" ? "17:00" : `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
+  const parsedTime = parseTimeInput(rawQuery.time, defaultTime);
+
+  return {
+    ...normalizeFilters(rawQuery),
+    day: now.getDay(),
+    featuredOnly: false,
+    meal,
+    openNow: false,
+    time: parsedTime.value,
+    timeLabel: parsedTime.value,
+    timeMinutes: parsedTime.minutes
+  };
+}
+
+function normalizeMapFilters(rawQuery = {}) {
+  const now = new Date();
+  const availability = MAP_AVAILABILITY_VALUES.includes(rawQuery.availability)
+    ? rawQuery.availability
+    : "open";
+  const previewTime = availability === "lunch"
+    ? "11:30"
+    : availability === "dinner"
+      ? "17:00"
+      : `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
+  const parsedPreviewTime = parseTimeInput(previewTime, previewTime);
+
+  return {
+    availability,
+    day: now.getDay(),
+    previewTime: parsedPreviewTime.value,
+    previewTimeLabel: parsedPreviewTime.value,
+    previewTimeMinutes: parsedPreviewTime.minutes,
+    suburb: typeof rawQuery.suburb === "string" ? rawQuery.suburb.trim() : ""
+  };
+}
+
+function matchesPlanMeal(openingHours, filters) {
+  if (filters.meal === "breakfast") {
+    for (let minutes = 6 * 60; minutes < 11 * 60; minutes += 30) {
+      if (getAvailabilityAt(openingHours, filters.day, minutes).isOpen) {
+        return true;
+      }
+    }
+
+    return false;
+  }
+
+  if (filters.meal === "lunch") {
+    return [11 * 60 + 30, 12 * 60].some((minutes) => getAvailabilityAt(openingHours, filters.day, minutes).isOpen);
+  }
+
+  if (filters.meal === "dinner") {
+    for (let minutes = 17 * 60; minutes < 24 * 60; minutes += 30) {
+      if (getAvailabilityAt(openingHours, filters.day, minutes).isOpen) {
+        return true;
+      }
+    }
+
+    return false;
+  }
+
+  return getAvailabilityAt(openingHours, filters.day, filters.timeMinutes).isOpen;
 }
 
 function normalizeLocation(rawQuery = {}) {
@@ -478,6 +671,51 @@ function compareNearbyPlaces(left, right) {
   return left.name.localeCompare(right.name);
 }
 
+function comparePlanPlaces(left, right) {
+  const leftDistance = Number.isFinite(left.distance_km) ? left.distance_km : Number.POSITIVE_INFINITY;
+  const rightDistance = Number.isFinite(right.distance_km) ? right.distance_km : Number.POSITIVE_INFINITY;
+
+  if (leftDistance !== rightDistance) {
+    return leftDistance - rightDistance;
+  }
+
+  const statusDifference = statusRank(left.status) - statusRank(right.status);
+
+  if (statusDifference !== 0) {
+    return statusDifference;
+  }
+
+  return left.name.localeCompare(right.name);
+}
+
+function matchesMapAvailabilityMode(openingHours, filters) {
+  if (filters.availability === "open") {
+    return getAvailabilityAt(openingHours, filters.day, filters.previewTimeMinutes).isOpen;
+  }
+
+  if (filters.availability === "lunch") {
+    return [11 * 60 + 30, 12 * 60].some((minutes) => getAvailabilityAt(openingHours, filters.day, minutes).isOpen);
+  }
+
+  if (filters.availability === "dinner") {
+    for (let minutes = 17 * 60; minutes < 24 * 60; minutes += 30) {
+      if (getAvailabilityAt(openingHours, filters.day, minutes).isOpen) {
+        return true;
+      }
+    }
+  }
+
+  return false;
+}
+
+function collectSuburbs(places) {
+  return [...new Set(
+    places
+      .map((place) => String(place.suburb || "").trim())
+      .filter(Boolean)
+  )].sort((left, right) => left.localeCompare(right));
+}
+
 function statusRank(status) {
   return {
     trusted: 1,
@@ -493,9 +731,12 @@ module.exports = {
   PLAN_STATUS_VALUES,
   getHomePreviewData,
   getHomepageData,
+  listMapPlaces,
   listPlanPlaces,
+  listTopSuburbs,
   getPublicPlaceBySlug,
   listNearbyPlaces,
   listPublicPlaces,
+  MAP_AVAILABILITY_VALUES,
   normalizeFilters
 };

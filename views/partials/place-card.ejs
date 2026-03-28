@@ -23,8 +23,8 @@
 
   <% if (place.tags && place.tags.length) { %>
     <div class="tag-row">
-      <% place.tags.slice(0, 4).forEach((tag) => { %>
-        <span class="meta-pill"><%= tag.name %></span>
+      <% tagsByGroup(place.tags, "menu_items").slice(0, 4).forEach((tag) => { %>
+        <a class="menu-chip menu-chip--link" href="/plan?tags=<%= encodeURIComponent(tag.slug) %>&meal=open"><%= tag.name %></a>
       <% }) %>
     </div>
   <% } %>

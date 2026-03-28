@@ -14,57 +14,88 @@ function attachOpenSummary(place, now = new Date()) {
 }
 
 function getOpenSummary(openingHours, now = new Date()) {
-  const currentDay = now.getDay();
-  const currentMinutes = now.getHours() * 60 + now.getMinutes();
-  const normalizedHours = normalizeOpeningHours(openingHours);
-  const todayEntries = getHoursForDay(normalizedHours, currentDay).filter((entry) => !entry.is_closed);
+  return getOpenSummaryForSelection(openingHours, now.getDay(), now.getHours() * 60 + now.getMinutes(), {
+    prefix: "Open now"
+  });
+}
 
-  for (const entry of todayEntries) {
-    const openMinutes = timeToMinutes(entry.open_time);
-    const closeMinutes = timeToMinutes(entry.close_time);
+function getOpenSummaryForSelection(openingHours, dayOfWeek, minutes, options = {}) {
+  const selection = getAvailabilityAt(openingHours, dayOfWeek, minutes);
+  const prefix = options.prefix || `Open at ${formatMinutes(minutes)}`;
 
-    if (currentMinutes >= openMinutes && currentMinutes < closeMinutes) {
-      return {
-        isOpen: true,
-        label: closeMinutes >= 24 * 60
-          ? `Open now until ${DAY_LABELS[(currentDay + 1) % 7]} ${formatTime(entry.close_time)}`
-          : `Open now until ${formatTime(entry.close_time)}`
-      };
-    }
+  if (selection.isOpen && selection.entry) {
+    const closeMinutes = timeToMinutes(selection.entry.close_time);
+
+    return {
+      isOpen: true,
+      label: closeMinutes >= 24 * 60 && selection.sourceDay !== dayOfWeek
+        ? `${prefix} until ${formatTime(selection.entry.close_time)}`
+        : closeMinutes >= 24 * 60
+          ? `${prefix} until ${DAY_LABELS[(dayOfWeek + 1) % 7]} ${formatTime(selection.entry.close_time)}`
+          : `${prefix} until ${formatTime(selection.entry.close_time)}`
+    };
   }
 
-  const previousDayEntries = getHoursForDay(normalizedHours, (currentDay + 6) % 7).filter((entry) => !entry.is_closed);
-
-  for (const entry of previousDayEntries) {
-    const closeMinutes = timeToMinutes(entry.close_time);
-
-    if (closeMinutes > 24 * 60 && currentMinutes < (closeMinutes - 24 * 60)) {
-      return {
-        isOpen: true,
-        label: `Open now until ${formatTime(entry.close_time)}`
-      };
-    }
-  }
-
-  const upcomingEntries = buildUpcomingEntries(normalizedHours, currentDay, currentMinutes);
-
-  if (upcomingEntries.length) {
-    const nextEntry = upcomingEntries[0];
-    const dayLabel = nextEntry.offsetDays === 0
+  if (selection.nextEntry) {
+    const relativeDayLabel = selection.nextEntry.offsetDays === 0
       ? "today"
-      : nextEntry.offsetDays === 1
+      : selection.nextEntry.offsetDays === 1
         ? "tomorrow"
-        : DAY_LABELS[nextEntry.day_of_week];
+        : DAY_LABELS[selection.nextEntry.day_of_week];
 
     return {
       isOpen: false,
-      label: `Closed now. Opens ${dayLabel} at ${formatTime(nextEntry.open_time)}`
+      label: `Closed. Opens ${relativeDayLabel} at ${formatTime(selection.nextEntry.open_time)}`
     };
   }
 
   return {
     isOpen: false,
-    label: "Closed for now"
+    label: "Closed"
+  };
+}
+
+function getAvailabilityAt(openingHours, dayOfWeek, minutes) {
+  const normalizedHours = normalizeOpeningHours(openingHours);
+  const todayEntries = getHoursForDay(normalizedHours, dayOfWeek).filter((entry) => !entry.is_closed);
+
+  for (const entry of todayEntries) {
+    const openMinutes = timeToMinutes(entry.open_time);
+    const closeMinutes = timeToMinutes(entry.close_time);
+
+    if (minutes >= openMinutes && minutes < closeMinutes) {
+      return {
+        entry,
+        isOpen: true,
+        nextEntry: null,
+        sourceDay: dayOfWeek
+      };
+    }
+  }
+
+  const previousDay = (dayOfWeek + 6) % 7;
+  const previousDayEntries = getHoursForDay(normalizedHours, previousDay).filter((entry) => !entry.is_closed);
+
+  for (const entry of previousDayEntries) {
+    const closeMinutes = timeToMinutes(entry.close_time);
+
+    if (closeMinutes > 24 * 60 && minutes < (closeMinutes - 24 * 60)) {
+      return {
+        entry,
+        isOpen: true,
+        nextEntry: null,
+        sourceDay: previousDay
+      };
+    }
+  }
+
+  const upcomingEntries = buildUpcomingEntries(normalizedHours, dayOfWeek, minutes);
+
+  return {
+    entry: null,
+    isOpen: false,
+    nextEntry: upcomingEntries[0] || null,
+    sourceDay: dayOfWeek
   };
 }
 
@@ -138,6 +169,14 @@ function formatTime(value) {
   return `${hour12}${minuteText} ${suffix}`;
 }
 
+function formatMinutes(minutes) {
+  const normalized = Math.max(0, Number(minutes) || 0);
+  const hours = Math.floor(normalized / 60);
+  const mins = normalized % 60;
+
+  return formatTime(`${String(hours).padStart(2, "0")}:${String(mins).padStart(2, "0")}`);
+}
+
 function formatHoursRange(entry) {
   if (!entry || entry.is_closed) {
     return "Closed";
@@ -184,11 +223,25 @@ function timeToMinutes(value) {
   return hours * 60 + minutes;
 }
 
+function parseTimeInput(value, fallback = "12:00") {
+  const raw = typeof value === "string" && /^\d{1,2}:\d{2}$/.test(value) ? value : fallback;
+  const [hours, minutes] = raw.split(":").map(Number);
+
+  return {
+    minutes: (hours * 60) + minutes,
+    value: `${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}`
+  };
+}
+
 module.exports = {
   DAY_LABELS,
   attachOpenSummary,
+  getAvailabilityAt,
   formatHoursForDay,
   formatHoursRange,
+  formatMinutes,
+  getOpenSummaryForSelection,
   normalizeOpeningHours,
+  parseTimeInput,
   timeToMinutes
 };

@@ -29,6 +29,11 @@
 <% } else { %>
   <section class="nearby-layout">
     <div class="section-block nearby-results-panel">
+      <div class="filters-actions nearby-meal-switcher">
+        <a class="button <%= !filters.meal ? "" : "button--secondary" %>" href="/nearby?lat=<%= encodeURIComponent(location.latitude) %>&lng=<%= encodeURIComponent(location.longitude) %><%= filters.search ? `&search=${encodeURIComponent(filters.search)}` : "" %>">Open</a>
+        <a class="button <%= filters.meal === "lunch" ? "" : "button--secondary" %>" href="/nearby?lat=<%= encodeURIComponent(location.latitude) %>&lng=<%= encodeURIComponent(location.longitude) %>&meal=lunch<%= filters.search ? `&search=${encodeURIComponent(filters.search)}` : "" %>">Lunch</a>
+        <a class="button <%= filters.meal === "dinner" ? "" : "button--secondary" %>" href="/nearby?lat=<%= encodeURIComponent(location.latitude) %>&lng=<%= encodeURIComponent(location.longitude) %>&meal=dinner<%= filters.search ? `&search=${encodeURIComponent(filters.search)}` : "" %>">Dinner</a>
+      </div>
       <div class="section-heading section-heading--roomy">
         <div>
           <h2><span class="module-icon module-icon--pink"></span><%= places.length %> nearby place<%= places.length === 1 ? "" : "s" %></h2>
@@ -50,6 +55,7 @@
       <form class="filters-panel" method="get" action="/nearby">
         <input type="hidden" id="nearby-lat-input" name="lat" value="<%= location.latitude ?? "" %>" />
         <input type="hidden" id="nearby-lng-input" name="lng" value="<%= location.longitude ?? "" %>" />
+        <input type="hidden" name="meal" value="<%= filters.meal %>" />
         <div class="compact-search-form">
           <input id="nearby-search" type="text" name="search" value="<%= filters.search %>" placeholder="Search places, suburbs, or notes" />
           <button class="button" type="submit">Search</button>

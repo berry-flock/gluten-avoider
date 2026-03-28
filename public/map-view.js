@@ -18,7 +18,9 @@ if (mapViewElement && mapViewDataElement && window.L) {
     const bounds = [];
 
     mapData.places.forEach((place) => {
-      const marker = window.L.marker([place.lat, place.lng]).addTo(map);
+      const marker = window.L.marker([place.lat, place.lng], {
+        icon: makeStatusIcon(place.isOpen)
+      }).addTo(map);
       markersBySlug.set(place.slug, marker);
       marker.bindPopup(
         `<strong>${escapeHtml(place.name)}</strong><br>${escapeHtml(place.suburb)}<br><a href="/places/${encodeURIComponent(place.slug)}">View details</a>`
@@ -67,6 +69,16 @@ if (mapViewElement && mapViewDataElement && window.L) {
       card.classList.remove("map-result-card--active");
     }, 1500);
   }
+}
+
+function makeStatusIcon(isOpen) {
+  return window.L.divIcon({
+    className: "map-pin-wrap",
+    html: `<span class="map-pin ${isOpen ? "map-pin--open" : "map-pin--closed"}"></span>`,
+    iconAnchor: [10, 20],
+    iconSize: [20, 20],
+    popupAnchor: [0, -18]
+  });
 }
 
 function escapeHtml(value) {

@@ -19,6 +19,12 @@
       <h2><a class="module-link" href="/nearby"><span class="module-icon module-icon--pink"></span>Nearby now</a></h2>
     </div>
 
+    <div class="filters-actions nearby-meal-switcher nearby-meal-switcher--home">
+      <button class="button <%= defaultNearbyMeal === "open" ? "" : "button--secondary" %>" type="button" data-home-nearby-meal="open">Open</button>
+      <button class="button <%= defaultNearbyMeal === "lunch" ? "" : "button--secondary" %>" type="button" data-home-nearby-meal="lunch">Lunch</button>
+      <button class="button <%= defaultNearbyMeal === "dinner" ? "" : "button--secondary" %>" type="button" data-home-nearby-meal="dinner">Dinner</button>
+    </div>
+
     <div id="home-nearby-preview">
       <p class="empty-state">Trying to find your location to show the closest trusted places that are open now.</p>
     </div>
@@ -38,6 +44,12 @@
           <% }) %>
         </select>
       </label>
+      <div class="meal-choice-group">
+        <input type="hidden" name="meal" value="<%= defaultPlanMeal %>" />
+        <button class="button <%= defaultPlanMeal === "breakfast" ? "" : "button--secondary" %>" type="button" data-home-plan-meal="breakfast">Breakfast</button>
+        <button class="button <%= defaultPlanMeal === "lunch" ? "" : "button--secondary" %>" type="button" data-home-plan-meal="lunch">Lunch</button>
+        <button class="button <%= defaultPlanMeal === "dinner" ? "" : "button--secondary" %>" type="button" data-home-plan-meal="dinner">Dinner</button>
+      </div>
       <label class="sr-only" for="home-search">Search places</label>
       <div class="compact-search-form">
         <input id="home-search" type="text" name="search" placeholder="Search places, suburbs, or notes" />
@@ -46,7 +58,7 @@
 
       <div class="filters-actions">
         <a class="button button--secondary" href="/plan#plan-filters">Search by tags</a>
-        <a class="button button--secondary" href="/places">Show everything</a>
+        <a class="button button--secondary" href="/plan">Show everything</a>
       </div>
     </form>
   </section>
@@ -56,8 +68,28 @@
       <h2><a class="module-link" href="/map"><span class="module-icon module-icon--mint"></span>Map view</a></h2>
     </div>
 
+    <div class="filters-actions home-map-controls">
+      <% mapAvailabilityValues.forEach((value) => { %>
+        <button class="button button--secondary home-map-filter" type="button" data-map-availability="<%= value %>"><%= value %></button>
+      <% }) %>
+    </div>
+    <div class="tag-row home-map-suburbs">
+      <% topSuburbs.forEach((suburb) => { %>
+        <button class="button button--secondary home-map-suburb" type="button" data-map-suburb="<%= suburb %>"><%= suburb %></button>
+      <% }) %>
+    </div>
     <div id="home-map" class="nearby-map"></div>
     <p id="home-map-message" class="section-copy">Trying to center the map on your current location.</p>
+  </section>
+
+  <section class="section-block home-module">
+    <div class="section-heading">
+      <h2><span class="module-icon module-icon--peach"></span>Food feelings</h2>
+      <button class="icon-button" type="button" id="food-feelings-refresh" aria-label="Refresh food feelings">
+        <span class="icon-refresh" aria-hidden="true"></span>
+      </button>
+    </div>
+    <div class="tag-row" id="food-feelings-list" data-food-feelings='<%- JSON.stringify(foodFeelingTags || []) %>'></div>
   </section>
 </div>
 

@@ -22,7 +22,7 @@
       <p class="nearby-card__label">On the menu</p>
       <div class="nearby-card__menu-row">
         <% menuItems.slice(0, 5).forEach((tag) => { %>
-          <span class="menu-chip"><%= tag.name %></span>
+          <a class="menu-chip menu-chip--link" href="/plan?tags=<%= encodeURIComponent(tag.slug) %>&meal=open"><%= tag.name %></a>
         <% }) %>
       </div>
     </div>

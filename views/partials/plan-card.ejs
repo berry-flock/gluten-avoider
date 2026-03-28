@@ -41,7 +41,7 @@
       <p class="plan-card__label">Food</p>
       <div class="tag-row">
         <% menuItems.slice(0, 5).forEach((tag) => { %>
-          <span class="meta-pill"><%= tag.name %></span>
+          <a class="menu-chip menu-chip--link" href="/plan?tags=<%= encodeURIComponent(tag.slug) %>&meal=open"><%= tag.name %></a>
         <% }) %>
       </div>
     </div>

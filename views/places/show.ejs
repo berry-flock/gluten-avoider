@@ -39,7 +39,7 @@
       <h2>Featured menu items</h2>
       <div class="tag-row">
         <% menuItems.forEach((tag) => { %>
-          <a class="tag-pill tag-pill--link" href="/places?tags=<%= encodeURIComponent(tag.slug) %>"><%= tag.name %></a>
+          <a class="tag-pill tag-pill--link" href="/plan?tags=<%= encodeURIComponent(tag.slug) %>"><%= tag.name %></a>
         <% }) %>
       </div>
     </section>
@@ -78,7 +78,7 @@
       <h2>Category</h2>
       <div class="tag-row">
         <% categoryTags.forEach((tag) => { %>
-          <a class="tag-pill tag-pill--link" href="/places?tags=<%= encodeURIComponent(tag.slug) %>"><%= tag.name %></a>
+          <a class="tag-pill tag-pill--link" href="/plan?tags=<%= encodeURIComponent(tag.slug) %>"><%= tag.name %></a>
         <% }) %>
       </div>
     </section>
@@ -90,7 +90,7 @@
       <h2>Gluten free features</h2>
       <div class="tag-row">
         <% glutenTags.forEach((tag) => { %>
-          <a class="tag-pill tag-pill--link" href="/places?tags=<%= encodeURIComponent(tag.slug) %>"><%= tag.name %></a>
+          <a class="tag-pill tag-pill--link" href="/plan?tags=<%= encodeURIComponent(tag.slug) %>"><%= tag.name %></a>
         <% }) %>
       </div>
     </section>

@@ -18,49 +18,71 @@
           <% }) %>
         </select>
       </label>
+      <div>
+        <span class="form-label">What time?</span>
+        <input type="hidden" name="meal" id="plan-meal" value="<%= filters.meal %>" />
+        <div class="meal-choice-group">
+          <button class="button <%= filters.meal === "breakfast" ? "" : "button--secondary" %>" type="button" data-plan-meal="breakfast">Breakfast</button>
+          <button class="button <%= filters.meal === "lunch" ? "" : "button--secondary" %>" type="button" data-plan-meal="lunch">Lunch</button>
+          <button class="button <%= filters.meal === "dinner" ? "" : "button--secondary" %>" type="button" data-plan-meal="dinner">Dinner</button>
+        </div>
+      </div>
+      <input type="hidden" name="lat" id="plan-lat" value="<%= filters.latitude ?? "" %>" />
+      <input type="hidden" name="lng" id="plan-lng" value="<%= filters.longitude ?? "" %>" />
     </div>
 
-    <% if (categoryTagGroup) { %>
-      <fieldset class="tag-filter-group tag-filter-group--prominent">
-        <legend>Occasion</legend>
-        <div class="tag-filter-list">
-          <% categoryTagGroup.tags.forEach((tag) => { %>
-            <label class="tag-checkbox">
-              <input type="checkbox" name="tags" value="<%= tag.slug %>" <%= hasSelectedTag(filters, tag.slug) ? "checked" : "" %> />
-              <span><%= tag.name %></span>
-            </label>
-          <% }) %>
-        </div>
-      </fieldset>
-    <% } %>
+    <div class="prominent-tag-groups">
+      <% if (categoryTagGroup) { %>
+        <% const categoryHasSelection = categoryTagGroup.tags.some((tag) => hasSelectedTag(filters, tag.slug)); %>
+        <details class="tag-filter-collapse" <%= categoryHasSelection ? "open" : "" %>>
+          <summary class="tag-filter-collapse__summary">Occasion</summary>
+          <fieldset class="tag-filter-group tag-filter-group--prominent">
+            <div class="tag-filter-list">
+              <% categoryTagGroup.tags.forEach((tag) => { %>
+                <label class="tag-checkbox">
+                  <input type="checkbox" name="tags" value="<%= tag.slug %>" <%= hasSelectedTag(filters, tag.slug) ? "checked" : "" %> />
+                  <span><%= tag.name %></span>
+                </label>
+              <% }) %>
+            </div>
+          </fieldset>
+        </details>
+      <% } %>
 
-    <% if (menuTagGroup) { %>
-      <fieldset class="tag-filter-group tag-filter-group--prominent">
-        <legend>Food</legend>
-        <div class="tag-filter-list">
-          <% menuTagGroup.tags.forEach((tag) => { %>
-            <label class="tag-checkbox">
-              <input type="checkbox" name="tags" value="<%= tag.slug %>" <%= hasSelectedTag(filters, tag.slug) ? "checked" : "" %> />
-              <span><%= tag.name %></span>
-            </label>
-          <% }) %>
-        </div>
-      </fieldset>
-    <% } %>
+      <% if (menuTagGroup) { %>
+        <% const menuHasSelection = menuTagGroup.tags.some((tag) => hasSelectedTag(filters, tag.slug)); %>
+        <details class="tag-filter-collapse" <%= menuHasSelection ? "open" : "" %>>
+          <summary class="tag-filter-collapse__summary">Food</summary>
+          <fieldset class="tag-filter-group tag-filter-group--prominent">
+            <div class="tag-filter-list">
+              <% menuTagGroup.tags.forEach((tag) => { %>
+                <label class="tag-checkbox">
+                  <input type="checkbox" name="tags" value="<%= tag.slug %>" <%= hasSelectedTag(filters, tag.slug) ? "checked" : "" %> />
+                  <span><%= tag.name %></span>
+                </label>
+              <% }) %>
+            </div>
+          </fieldset>
+        </details>
+      <% } %>
 
-    <% if (glutenTagGroup) { %>
-      <fieldset class="tag-filter-group tag-filter-group--prominent">
-        <legend>GF support</legend>
-        <div class="tag-filter-list">
-          <% glutenTagGroup.tags.forEach((tag) => { %>
-            <label class="tag-checkbox">
-              <input type="checkbox" name="tags" value="<%= tag.slug %>" <%= hasSelectedTag(filters, tag.slug) ? "checked" : "" %> />
-              <span><%= tag.name %></span>
-            </label>
-          <% }) %>
-        </div>
-      </fieldset>
-    <% } %>
+      <% if (glutenTagGroup) { %>
+        <% const glutenHasSelection = glutenTagGroup.tags.some((tag) => hasSelectedTag(filters, tag.slug)); %>
+        <details class="tag-filter-collapse" <%= glutenHasSelection ? "open" : "" %>>
+          <summary class="tag-filter-collapse__summary">GF support</summary>
+          <fieldset class="tag-filter-group tag-filter-group--prominent">
+            <div class="tag-filter-list">
+              <% glutenTagGroup.tags.forEach((tag) => { %>
+                <label class="tag-checkbox">
+                  <input type="checkbox" name="tags" value="<%= tag.slug %>" <%= hasSelectedTag(filters, tag.slug) ? "checked" : "" %> />
+                  <span><%= tag.name %></span>
+                </label>
+              <% }) %>
+            </div>
+          </fieldset>
+        </details>
+      <% } %>
+    </div>
 
     <fieldset class="tag-filter-group tag-filter-group--prominent">
       <legend>Regular or somewhere new?</legend>
@@ -76,7 +98,7 @@
 
     <div class="filters-actions">
       <button class="button" type="submit">Find ideas</button>
-      <a class="button button--secondary" href="/plan">Reset</a>
+      <a class="button button--secondary" href="/plan">Show everything</a>
     </div>
   </form>
 </section>
@@ -102,7 +124,7 @@
 <% } %>
 
 <% if (filters.statusPreference !== "trusted") { %>
-  <section class="section-block">
+  <section class="section-block" <%= filters.statusPreference === "want_to_try" ? 'id="plan-results"' : "" %>>
     <div class="section-heading section-heading--roomy">
       <div>
         <h2><span class="module-icon module-icon--pink"></span>Somewhere new</h2>

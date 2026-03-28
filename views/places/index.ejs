@@ -13,17 +13,20 @@
     <% if (groupedTags.length) { %>
       <div class="prominent-tag-groups">
         <% groupedTags.forEach((group) => { %>
-          <fieldset class="tag-filter-group tag-filter-group--prominent">
-            <legend><%= group.label %></legend>
-            <div class="tag-filter-list">
-              <% group.tags.forEach((tag) => { %>
-                <label class="tag-checkbox">
-                  <input type="checkbox" name="tags" value="<%= tag.slug %>" <%= hasSelectedTag(filters, tag.slug) ? "checked" : "" %> />
-                  <span><%= tag.name %></span>
-                </label>
-              <% }) %>
-            </div>
-          </fieldset>
+          <% const groupHasSelection = group.tags.some((tag) => hasSelectedTag(filters, tag.slug)); %>
+          <details class="tag-filter-collapse" <%= groupHasSelection ? "open" : "" %>>
+            <summary class="tag-filter-collapse__summary"><%= group.label %></summary>
+            <fieldset class="tag-filter-group tag-filter-group--prominent">
+              <div class="tag-filter-list">
+                <% group.tags.forEach((tag) => { %>
+                  <label class="tag-checkbox">
+                    <input type="checkbox" name="tags" value="<%= tag.slug %>" <%= hasSelectedTag(filters, tag.slug) ? "checked" : "" %> />
+                    <span><%= tag.name %></span>
+                  </label>
+                <% }) %>
+              </div>
+            </fieldset>
+          </details>
         <% }) %>
       </div>
     <% } %>
@@ -72,7 +75,7 @@
 
 <section class="section-block" id="place-results">
   <div class="section-heading">
-    <h2><%= places.length %> public place<%= places.length === 1 ? "" : "s" %></h2>
+    <h2><%= places.length %> place<%= places.length === 1 ? "" : "s" %></h2>
   </div>
 
   <% if (places.length) { %>

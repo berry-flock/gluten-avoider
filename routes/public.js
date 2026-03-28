@@ -1,13 +1,14 @@
 const express = require("express");
 const {
+  MAP_AVAILABILITY_VALUES,
   PLAN_STATUS_VALUES,
-  SORT_VALUES,
   STATUS_VALUES,
   getHomePreviewData,
   getPublicPlaceBySlug,
+  listMapPlaces,
   listNearbyPlaces,
   listPlanPlaces,
-  listPublicPlaces
+  listTopSuburbs
 } = require("../db/places");
 const { listPublicTags } = require("../db/tags");
 const { getGroupedTags } = require("../utils/tag-groups");
@@ -16,8 +17,20 @@ const router = express.Router();
 
 router.get("/", async (req, res, next) => {
   try {
+    const now = new Date();
+    const defaultPlanMeal = now.getHours() < 11 ? "breakfast" : now.getHours() < 17 ? "lunch" : "dinner";
+    const defaultNearbyMeal = "open";
+    const [availableTags, topSuburbs] = await Promise.all([
+      listPublicTags(),
+      listTopSuburbs(3)
+    ]);
+    const menuTagGroup = getGroupedTags(availableTags).find((group) => group.key === "menu_items") || null;
+
     res.render("home", {
       defaultPlanDay: new Date().getDay(),
+      defaultPlanMeal,
+      defaultPlanTime: `${String(new Date().getHours()).padStart(2, "0")}:${String(new Date().getMinutes()).padStart(2, "0")}`,
+      defaultNearbyMeal,
       extraHead: `
     <link
       rel="stylesheet"
@@ -25,7 +38,10 @@ router.get("/", async (req, res, next) => {
       integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
       crossorigin=""
     />`,
-      pageTitle: "Gluten Avoider"
+      foodFeelingTags: menuTagGroup ? menuTagGroup.tags : [],
+      mapAvailabilityValues: MAP_AVAILABILITY_VALUES,
+      pageTitle: "Gluten Avoider",
+      topSuburbs
     });
   } catch (error) {
     next(error);
@@ -34,14 +50,16 @@ router.get("/", async (req, res, next) => {
 
 router.get("/home/preview-data", async (req, res, next) => {
   try {
-    const { location, mapPlaces, nearbyPlaces } = await getHomePreviewData(req.query);
+    const { filters, location, mapPlaces, nearbyPlaces } = await getHomePreviewData(req.query);
 
     res.json({
+      filters,
       hasCoordinates: location.hasCoordinates,
       mapPlaces: mapPlaces.map((place) => ({
         lat: Number(place.latitude),
         lng: Number(place.longitude),
         name: place.name,
+        isOpen: Boolean(place.selectedAvailability && place.selectedAvailability.isOpen),
         slug: place.slug,
         suburb: place.suburb
       })),
@@ -52,7 +70,7 @@ router.get("/home/preview-data", async (req, res, next) => {
         menuUrl: place.website_url || "",
         name: place.name,
         notesPublic: place.notes_public || "",
-        openSummary: place.openSummary,
+        openSummary: place.selectedAvailability || place.openSummary,
         slug: place.slug,
         status: place.status,
         suburb: place.suburb
@@ -69,20 +87,35 @@ router.get("/home/preview-data", async (req, res, next) => {
 
 router.get("/places", async (req, res, next) => {
   try {
-    const [{ filters, places }, availableTags] = await Promise.all([
-      listPublicPlaces(req.query),
-      listPublicTags()
-    ]);
+    const params = new URLSearchParams();
 
-    res.render("places/index", {
-      availableTags,
-      filters,
-      groupedTags: getGroupedTags(availableTags),
-      pageTitle: "Browse places",
-      places,
-      sortValues: SORT_VALUES.filter((value) => value !== "featured"),
-      statusValues: STATUS_VALUES
-    });
+    for (const [key, value] of Object.entries(req.query || {})) {
+      if (value === undefined || value === null || value === "") {
+        continue;
+      }
+
+      if (Array.isArray(value)) {
+        value.forEach((item) => {
+          if (item !== undefined && item !== null && item !== "") {
+            params.append(key, String(item));
+          }
+        });
+        continue;
+      }
+
+      params.set(key, String(value));
+    }
+
+    if (params.get("open_now") === "1" && !params.has("meal")) {
+      params.set("meal", "open");
+    }
+
+    params.delete("open_now");
+    params.delete("sort");
+    params.delete("featured");
+    params.delete("gf_confidence");
+
+    res.redirect(`/plan${params.toString() ? `?${params.toString()}` : ""}`);
   } catch (error) {
     next(error);
   }
@@ -114,16 +147,10 @@ router.get("/map", (req, res) => {
 
 router.get("/map/view", async (req, res, next) => {
   try {
-    const [{ filters, places }, availableTags] = await Promise.all([
-      listPublicPlaces(req.query),
+    const [{ filters, places, suburbs, location }, availableTags] = await Promise.all([
+      listMapPlaces(req.query),
       listPublicTags()
     ]);
-    const mappablePlaces = places.filter((place) => {
-      const latitude = Number(place.latitude);
-      const longitude = Number(place.longitude);
-
-      return Number.isFinite(latitude) && Number.isFinite(longitude);
-    });
 
     res.render("map", {
       extraHead: `
@@ -135,9 +162,12 @@ router.get("/map/view", async (req, res, next) => {
     />`,
       filters,
       groupedTags: getGroupedTags(availableTags),
-      mappablePlaces,
+      location,
+      mapAvailabilityValues: MAP_AVAILABILITY_VALUES,
+      mappablePlaces: places,
       pageTitle: "Map view",
-      placesWithoutCoordinates: places.length - mappablePlaces.length,
+      placesWithoutCoordinates: 0,
+      suburbs,
       statusValues: STATUS_VALUES
     });
   } catch (error) {
