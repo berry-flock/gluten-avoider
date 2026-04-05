@@ -1,5 +1,6 @@
 const { all, get, run, withTransaction } = require("./connection");
 const { slugify } = require("../utils/slugify");
+const { categoryForTagGroup, isValidTagGroup } = require("../utils/tag-groups");
 
 async function listAdminTags() {
   return all(
@@ -39,6 +40,12 @@ async function getAdminTagById(id) {
 
 async function createAdminTag(tagInput) {
   return withTransaction(async () => {
+    if (!isValidTagGroup(tagInput.tag_group)) {
+      const error = new Error("Choose a valid tag group.");
+      error.code = "INVALID_TAG_GROUP";
+      throw error;
+    }
+
     const existingByName = await get(
       `SELECT id
        FROM tags
@@ -57,7 +64,7 @@ async function createAdminTag(tagInput) {
     const result = await run(
       `INSERT INTO tags (name, slug, category, tag_group)
        VALUES (?, ?, ?, ?)`,
-      [tagInput.name, slug, categoryForGroup(tagInput.tag_group), tagInput.tag_group]
+      [tagInput.name, slug, categoryForTagGroup(tagInput.tag_group), tagInput.tag_group]
     );
 
     return result.lastID;
@@ -66,6 +73,12 @@ async function createAdminTag(tagInput) {
 
 async function updateAdminTag(id, tagInput) {
   return withTransaction(async () => {
+    if (!isValidTagGroup(tagInput.tag_group)) {
+      const error = new Error("Choose a valid tag group.");
+      error.code = "INVALID_TAG_GROUP";
+      throw error;
+    }
+
     const existingByName = await get(
       `SELECT id
        FROM tags
@@ -89,7 +102,7 @@ async function updateAdminTag(id, tagInput) {
          category = ?,
          tag_group = ?
        WHERE id = ?`,
-      [tagInput.name, slug, categoryForGroup(tagInput.tag_group), tagInput.tag_group, id]
+      [tagInput.name, slug, categoryForTagGroup(tagInput.tag_group), tagInput.tag_group, id]
     );
   });
 }
@@ -130,14 +143,6 @@ async function createUniqueTagSlug(name, excludeId = null) {
 
     attempt += 1;
   }
-}
-
-function categoryForGroup(tagGroup) {
-  if (tagGroup === "gluten_features") {
-    return "dietary";
-  }
-
-  return "meal";
 }
 
 module.exports = {

@@ -17,6 +17,12 @@ const TAG_GROUP_DEFINITIONS = [
 ];
 
 const TAG_PRIORITY = new Map();
+const TAG_GROUP_KEYS = new Set(TAG_GROUP_DEFINITIONS.map((group) => group.key));
+const TAG_CATEGORY_BY_GROUP = {
+  category: "meal",
+  menu_items: "meal",
+  gluten_features: "dietary"
+};
 
 TAG_GROUP_DEFINITIONS.forEach((group, groupIndex) => {
   TAG_PRIORITY.set(group.key, groupIndex);
@@ -50,8 +56,18 @@ function sortTagsForDisplay(tags) {
   });
 }
 
+function isValidTagGroup(tagGroup) {
+  return TAG_GROUP_KEYS.has(tagGroup);
+}
+
+function categoryForTagGroup(tagGroup) {
+  return TAG_CATEGORY_BY_GROUP[tagGroup] || TAG_CATEGORY_BY_GROUP.category;
+}
+
 module.exports = {
   TAG_GROUP_DEFINITIONS,
+  categoryForTagGroup,
   getGroupedTags,
+  isValidTagGroup,
   sortTagsForDisplay
 };

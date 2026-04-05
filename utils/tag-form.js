@@ -1,6 +1,4 @@
-const { TAG_GROUP_DEFINITIONS } = require("./tag-groups");
-
-const TAG_GROUP_KEYS = new Set(TAG_GROUP_DEFINITIONS.map((group) => group.key));
+const { TAG_GROUP_DEFINITIONS, isValidTagGroup } = require("./tag-groups");
 
 function buildTagFormData(tag = {}) {
   return {
@@ -23,7 +21,7 @@ function validateTagForm(formData) {
     errors.name = "Tag name is required.";
   }
 
-  if (!TAG_GROUP_KEYS.has(formData.tag_group)) {
+  if (!isValidTagGroup(formData.tag_group)) {
     errors.tag_group = "Choose a valid tag group.";
   }
 

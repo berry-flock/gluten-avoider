@@ -1,6 +1,7 @@
 const { all, run, withTransaction } = require("./connection");
 const { slugify } = require("../utils/slugify");
 const { parseOpeningHoursText } = require("../utils/place-form");
+const { categoryForTagGroup, isValidTagGroup } = require("../utils/tag-groups");
 
 const EXPORT_COLUMNS = [
   "name",
@@ -355,6 +356,10 @@ function parseCsv(text) {
 }
 
 async function ensureTag(tagIdByKey, name, groupKey) {
+  if (!isValidTagGroup(groupKey)) {
+    throw new Error(`Invalid tag group "${groupKey}" in backup import.`);
+  }
+
   const key = `${groupKey}:${name.toLowerCase()}`;
 
   if (tagIdByKey.has(key)) {
@@ -364,7 +369,7 @@ async function ensureTag(tagIdByKey, name, groupKey) {
   const insertResult = await run(
     `INSERT INTO tags (name, slug, category, tag_group)
      VALUES (?, ?, ?, ?)`,
-    [name, await createUniqueTagSlug(name), categoryForGroup(groupKey), groupKey]
+    [name, await createUniqueTagSlug(name), categoryForTagGroup(groupKey), groupKey]
   );
 
   tagIdByKey.set(key, insertResult.lastID);
@@ -401,10 +406,6 @@ async function createUniqueTagSlug(name) {
 
     attempt += 1;
   }
-}
-
-function categoryForGroup(groupKey) {
-  return groupKey === "gluten_features" ? "dietary" : "meal";
 }
 
 module.exports = {

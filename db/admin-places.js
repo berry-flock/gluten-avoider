@@ -1,5 +1,6 @@
 const { all, get, run, withTransaction } = require("./connection");
 const { slugify } = require("../utils/slugify");
+const { categoryForTagGroup, isValidTagGroup } = require("../utils/tag-groups");
 
 async function listAdminPlaces() {
   return all(
@@ -213,6 +214,12 @@ async function resolveTagIds(existingTagIds, newTagsByGroup) {
   const resolvedIds = [...existingTagIds];
 
   for (const [groupKey, names] of Object.entries(newTagsByGroup || {})) {
+    if (!isValidTagGroup(groupKey)) {
+      const error = new Error(`Invalid tag group "${groupKey}".`);
+      error.code = "INVALID_TAG_GROUP";
+      throw error;
+    }
+
     for (const rawName of names) {
       const name = rawName.trim();
 
@@ -250,7 +257,7 @@ async function resolveTagIds(existingTagIds, newTagsByGroup) {
       const insertResult = await run(
         `INSERT INTO tags (name, slug, category, tag_group)
          VALUES (?, ?, ?, ?)`,
-        [name, slug, getTagCategoryForGroup(groupKey), groupKey]
+        [name, slug, categoryForTagGroup(groupKey), groupKey]
       );
 
       resolvedIds.push(insertResult.lastID);
@@ -279,14 +286,6 @@ async function createUniqueTagSlug(name) {
 
     attempt += 1;
   }
-}
-
-function getTagCategoryForGroup(groupKey) {
-  if (groupKey === "gluten_features") {
-    return "dietary";
-  }
-
-  return "meal";
 }
 
 module.exports = {

@@ -1,6 +1,7 @@
 const fs = require("fs");
 const path = require("path");
 const { exec, getDb } = require("./connection");
+const { categoryForTagGroup } = require("../utils/tag-groups");
 
 async function initializeDatabase() {
   const schemaPath = path.join(__dirname, "schema.sql");
@@ -8,6 +9,7 @@ async function initializeDatabase() {
 
   await exec(schemaSql);
   await ensureTagGroupColumn();
+  await normalizeTagMetadata();
   await ensureOpeningHoursSchema();
 }
 
@@ -29,21 +31,30 @@ function ensureTagGroupColumn() {
           );
         }
 
-        await exec(`
-          UPDATE tags
-          SET tag_group = CASE
-            WHEN slug IN ('sandwich', 'noodles', 'laksa', 'fried-chicken', 'san-choi-bao') THEN 'menu_items'
-            WHEN slug IN ('gf-bread-available', 'dedicated-fryer', 'gluten-free-menu', 'gluten-free-soy-sauce', 'coeliac-aware', 'uncertain-gf') THEN 'gluten_features'
-            ELSE 'category'
-          END
-        `);
-
         resolve();
       } catch (migrationError) {
         reject(migrationError);
       }
     });
   });
+}
+
+async function normalizeTagMetadata() {
+  await exec(`
+    UPDATE tags
+    SET tag_group = CASE
+      WHEN COALESCE(tag_group, '') IN ('category', 'menu_items', 'gluten_features') THEN tag_group
+      ELSE 'category'
+    END
+  `);
+
+  await exec(`
+    UPDATE tags
+    SET category = CASE
+      WHEN tag_group = 'gluten_features' THEN '${categoryForTagGroup("gluten_features")}'
+      ELSE '${categoryForTagGroup("category")}'
+    END
+  `);
 }
 
 function ensureOpeningHoursSchema() {
