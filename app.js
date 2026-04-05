@@ -13,7 +13,38 @@ const app = express();
 app.set("view engine", "ejs");
 app.set("views", path.join(__dirname, "views"));
 
-app.use(helmet());
+app.use(helmet({
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      scriptSrc: [
+        "'self'",
+        // Leaflet — matches the integrity hash in map/nearby templates
+        "'sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo='"
+      ],
+      styleSrc: [
+        "'self'",
+        "https://fonts.googleapis.com",
+        "'unsafe-inline'" // Leaflet injects inline styles for marker positioning
+      ],
+      fontSrc: ["'self'", "https://fonts.gstatic.com"],
+      imgSrc: [
+        "'self'",
+        "https://*.basemaps.cartocdn.com",
+        "data:" // Leaflet uses data URIs for default marker icons
+      ],
+      connectSrc: ["'self'", "https://*.basemaps.cartocdn.com"]
+    }
+  },
+  permissionsPolicy: {
+    features: {
+      geolocation: ["self"],
+      camera: [],
+      microphone: [],
+      displayCapture: []
+    }
+  }
+}));
 app.use(express.urlencoded({ extended: true }));
 app.use(
   session({
