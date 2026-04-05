@@ -1,0 +1,76 @@
+<%- include("partials/header") %>
+
+<section class="section-block feelings-hero">
+  <div class="section-heading section-heading--roomy">
+    <div>
+      <p class="eyebrow">Food feelings</p>
+      <h1><span class="module-icon module-icon--peach"></span>What are you in the mood for?</h1>
+      <p class="section-copy">Tap whatever sounds good, reshuffle when you're blank, and use occasion tags to tighten the vibe.</p>
+    </div>
+    <div class="feelings-hero__actions">
+      <button class="button" type="button" id="feelings-refresh">Refresh cravings</button>
+      <a class="button button--secondary" href="/plan">Open full planner</a>
+    </div>
+  </div>
+
+  <div class="feelings-stage">
+    <div class="feelings-stage__orb" aria-hidden="true"></div>
+    <div class="feelings-stage__chips" id="feelings-menu-tags"></div>
+  </div>
+</section>
+
+<section class="section-block feelings-refine">
+  <div class="section-heading">
+    <div>
+      <h2>Refine the vibe</h2>
+      <p class="section-copy">Optional, but helpful when you know the mood more than the meal.</p>
+    </div>
+    <button class="button button--secondary" type="button" id="feelings-clear">Clear selections</button>
+  </div>
+
+  <% if (categoryTagGroup && categoryTagGroup.tags.length) { %>
+    <div class="tag-row feelings-occasion-tags" id="feelings-occasion-tags">
+      <% categoryTagGroup.tags.forEach((tag) => { %>
+        <button class="occasion-chip occasion-chip--toggle" type="button" data-feelings-occasion="<%= tag.slug %>"><%= tag.name %></button>
+      <% }) %>
+    </div>
+  <% } %>
+</section>
+
+<section class="section-block">
+  <div class="section-heading section-heading--roomy">
+    <div>
+      <h2><span id="feelings-results-count"><%= places.length %></span> ideas</h2>
+      <p class="section-copy" id="feelings-results-copy">A mix of places to get you out of the “I don’t know” zone.</p>
+    </div>
+  </div>
+
+  <div class="card-grid" id="feelings-results"></div>
+</section>
+
+<script id="feelings-data" type="application/json"><%- JSON.stringify({
+  menuTags: (foodFeelingTags || []).map((tag) => ({
+    name: tag.name,
+    slug: tag.slug
+  })),
+  occasionTags: (categoryTagGroup?.tags || []).map((tag) => ({
+    name: tag.name,
+    slug: tag.slug
+  })),
+  places: places.map((place) => ({
+    menuUrl: place.website_url || "",
+    menuItems: (place.tags || [])
+      .filter((tag) => tag.tag_group === "menu_items")
+      .map((tag) => ({ name: tag.name, slug: tag.slug })),
+    name: place.name,
+    occasionTags: (place.tags || [])
+      .filter((tag) => tag.tag_group === "category")
+      .map((tag) => ({ name: tag.name, slug: tag.slug })),
+    openSummary: place.openSummary || null,
+    slug: place.slug,
+    suburb: place.suburb || ""
+  }))
+}) %></script>
+<script src="/feelings.js"></script>
+
+<%- include("partials/footer") %>

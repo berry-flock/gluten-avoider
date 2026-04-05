@@ -189,6 +189,28 @@ router.get("/nearby", async (req, res, next) => {
   }
 });
 
+router.get("/feelings", async (req, res, next) => {
+  try {
+    const [{ places }, availableTags] = await Promise.all([
+      listPlanPlaces({}),
+      listPublicTags()
+    ]);
+    const groupedTags = getGroupedTags(availableTags);
+    const categoryTagGroup = groupedTags.find((group) => group.key === "category") || null;
+    const menuTagGroup = groupedTags.find((group) => group.key === "menu_items") || null;
+    const feelingPlaces = places.filter((place) => (place.tags || []).some((tag) => tag.tag_group === "menu_items"));
+
+    res.render("feelings", {
+      categoryTagGroup,
+      foodFeelingTags: menuTagGroup ? menuTagGroup.tags : [],
+      pageTitle: "Food feelings",
+      places: feelingPlaces
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
 router.get("/plan", async (req, res, next) => {
   try {
     const [{ filters, places }, availableTags] = await Promise.all([

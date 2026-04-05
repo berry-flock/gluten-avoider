@@ -8,17 +8,33 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;800&family=Nunito:wght@500;600;700;800&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="/styles.css" />
+    <script src="/site-header.js" defer></script>
     <%- typeof extraHead !== "undefined" ? extraHead : "" %>
   </head>
   <body>
+    <% const currentNav = pageTitle === "Nearby now"
+      ? "nearby"
+      : pageTitle === "Map view"
+      ? "map"
+      : pageTitle === "Food feelings"
+      ? "feelings"
+      : "home"; %>
     <header class="site-header">
       <div class="shell site-header__inner">
-        <a class="site-title" href="/">Gluten Avoider</a>
+        <div class="site-brand-wrap">
+          <a class="site-title" href="/">Gluten Avoider</a>
+          <p class="site-tagline">Let's get you fed</p>
+        </div>
         <nav class="site-nav">
-          <a class="site-nav__link" href="/nearby"><span class="module-icon module-icon--pink"></span><span>Nearby</span></a>
-          <a class="site-nav__link" href="/plan"><span class="module-icon module-icon--yellow"></span><span>Plan</span></a>
-          <a class="site-nav__link" href="<%= currentAdmin ? "/admin" : "/admin/login" %>"><span class="module-icon module-icon--lavender"></span><span><%= currentAdmin ? "Admin" : "Login" %></span></a>
+          <a class="site-nav__link <%= currentNav === "home" ? "site-nav__link--active" : "" %>" href="/" <%= currentNav === "home" ? 'aria-current="page"' : "" %>><span class="module-icon module-icon--paper"></span><span class="site-nav__label">Home</span></a>
+          <a class="site-nav__link <%= currentNav === "nearby" ? "site-nav__link--active" : "" %>" href="/nearby" <%= currentNav === "nearby" ? 'aria-current="page"' : "" %>><span class="module-icon module-icon--pink"></span><span class="site-nav__label">Nearby now</span></a>
+          <a class="site-nav__link <%= currentNav === "map" ? "site-nav__link--active" : "" %>" href="/map/view" <%= currentNav === "map" ? 'aria-current="page"' : "" %>><span class="module-icon module-icon--mint"></span><span class="site-nav__label">Map view</span></a>
+          <a class="site-nav__link <%= currentNav === "feelings" ? "site-nav__link--active" : "" %>" href="/feelings" <%= currentNav === "feelings" ? 'aria-current="page"' : "" %>><span class="module-icon module-icon--peach"></span><span class="site-nav__label">Food feelings</span></a>
         </nav>
+        <a class="site-admin-link" href="<%= currentAdmin ? "/admin" : "/admin/login" %>" aria-label="<%= currentAdmin ? "Admin" : "Login" %>">
+          <span class="site-admin-link__icon" aria-hidden="true"></span>
+          <span class="sr-only"><%= currentAdmin ? "Admin" : "Login" %></span>
+        </a>
       </div>
     </header>
     <main class="shell page-content">

@@ -5,18 +5,11 @@
 </style>`; %>
 <%- include("partials/header") %>
 
-<section class="section-block home-intro-card">
-  <div class="section-heading section-heading--roomy">
-    <div>
-      <p class="eyebrow">Find safe eats</p>
-      <h1>Let's get you fed</h1>
-      <p class="section-copy">Use nearby now when you need a quick answer. Use plan later when you are making weekend dinner plans or chasing a craving.</p>
-    </div>
-    <% if (currentAdmin) { %>
-      <a class="button" href="/admin/places/new">Add new restaurant</a>
-    <% } %>
+<% if (currentAdmin) { %>
+  <div class="home-admin-actions">
+    <a class="button" href="/admin/places/new">Add new restaurant</a>
   </div>
-</section>
+<% } %>
 
 <div class="home-module-grid">
   <section class="section-block home-module home-module--nearby">
@@ -71,7 +64,7 @@
 
     <section class="section-block home-module home-module--food">
       <div class="section-heading">
-        <h2><span class="module-icon module-icon--peach"></span>Food feelings</h2>
+        <h2><a class="module-link" href="/feelings"><span class="module-icon module-icon--peach"></span>Food feelings</a></h2>
         <button class="icon-button" type="button" id="food-feelings-refresh" aria-label="Refresh food feelings">
           <span class="icon-refresh" aria-hidden="true"></span>
         </button>
