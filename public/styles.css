@@ -1006,6 +1006,10 @@ textarea {
   gap: 0.55rem;
 }
 
+.leaflet-container img.leaflet-tile {
+  mix-blend-mode: normal;
+}
+
 .nearby-map,
 .map-view-canvas {
   height: 300px;
