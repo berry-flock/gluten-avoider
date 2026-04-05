@@ -1,4 +1,8 @@
-<% const extraHead = '<link rel="stylesheet" href="/leaflet.css" />'; %>
+<% const assetVersion = "20260405-2"; %>
+<% const extraHead = `<link rel="stylesheet" href="/leaflet.css?v=${assetVersion}" />
+<style>
+  .leaflet-container img.leaflet-tile { mix-blend-mode: normal; }
+</style>`; %>
 <%- include("partials/header") %>
 
 <section class="section-block">
@@ -48,7 +52,7 @@
   <% } %>
 </section>
 
-<script src="/leaflet.js"></script>
+<script src="/leaflet.js?v=<%= assetVersion %>"></script>
 <script id="map-view-data" type="application/json"><%- JSON.stringify({
   places: mappablePlaces.map((place) => ({
     lat: Number(place.latitude),
@@ -59,6 +63,6 @@
     suburb: place.suburb
   }))
 }) %></script>
-<script src="/map-view.js"></script>
+<script src="/map-view.js?v=<%= assetVersion %>"></script>
 
 <%- include("partials/footer") %>

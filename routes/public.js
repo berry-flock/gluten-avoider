@@ -14,6 +14,12 @@ const { listPublicTags } = require("../db/tags");
 const { getGroupedTags } = require("../utils/tag-groups");
 
 const router = express.Router();
+const MAP_ASSET_VERSION = "20260405-2";
+const MAP_EXTRA_HEAD = `
+    <link rel="stylesheet" href="/leaflet.css?v=${MAP_ASSET_VERSION}" />
+    <style>
+      .leaflet-container img.leaflet-tile { mix-blend-mode: normal; }
+    </style>`;
 
 router.get("/", async (req, res, next) => {
   try {
@@ -31,13 +37,7 @@ router.get("/", async (req, res, next) => {
       defaultPlanMeal,
       defaultPlanTime: `${String(new Date().getHours()).padStart(2, "0")}:${String(new Date().getMinutes()).padStart(2, "0")}`,
       defaultNearbyMeal,
-      extraHead: `
-    <link
-      rel="stylesheet"
-      href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
-      integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
-      crossorigin=""
-    />`,
+      extraHead: MAP_EXTRA_HEAD,
       foodFeelingTags: menuTagGroup ? menuTagGroup.tags : [],
       mapAvailabilityValues: MAP_AVAILABILITY_VALUES,
       pageTitle: "Gluten Avoider",
@@ -153,13 +153,7 @@ router.get("/map/view", async (req, res, next) => {
     ]);
 
     res.render("map", {
-      extraHead: `
-    <link
-      rel="stylesheet"
-      href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
-      integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
-      crossorigin=""
-    />`,
+      extraHead: MAP_EXTRA_HEAD,
       filters,
       groupedTags: getGroupedTags(availableTags),
       location,
@@ -180,15 +174,7 @@ router.get("/nearby", async (req, res, next) => {
     const { filters, location, places } = await listNearbyPlaces(req.query);
 
     res.render("nearby", {
-      extraHead: location.hasCoordinates
-        ? `
-    <link
-      rel="stylesheet"
-      href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
-      integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
-      crossorigin=""
-    />`
-        : "",
+      extraHead: location.hasCoordinates ? MAP_EXTRA_HEAD : "",
       filters,
       location,
       pageTitle: "Nearby now",

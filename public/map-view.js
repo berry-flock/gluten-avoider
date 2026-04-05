@@ -12,7 +12,7 @@ if (mapViewElement && mapViewDataElement && window.L) {
     attribution: '&copy; OpenStreetMap contributors &copy; CARTO'
   }).addTo(map);
 
-  window.setTimeout(() => map.invalidateSize(), 0);
+  scheduleMapRelayout(map);
 
   if (!mapData.places.length) {
     map.setView([-33.8688, 151.2093], 10);
@@ -35,6 +35,8 @@ if (mapViewElement && mapViewDataElement && window.L) {
     updateVisibleCards();
     map.on("moveend", updateVisibleCards);
   }
+
+  scheduleMapRelayout(map);
 
   function updateVisibleCards() {
     const bounds = map.getBounds();
@@ -90,4 +92,15 @@ function escapeHtml(value) {
     .replace(/>/g, "&gt;")
     .replace(/"/g, "&quot;")
     .replace(/'/g, "&#39;");
+}
+
+function scheduleMapRelayout(map) {
+  if (!map) {
+    return;
+  }
+
+  const refresh = () => map.invalidateSize(false);
+  window.requestAnimationFrame(refresh);
+  window.setTimeout(refresh, 120);
+  window.setTimeout(refresh, 320);
 }

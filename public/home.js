@@ -142,7 +142,7 @@ function renderHomeMap(payload) {
 
   if (!homeMapInstance) {
     homeMapInstance = window.L.map("home-map");
-    window.setTimeout(() => homeMapInstance.invalidateSize(), 0);
+    scheduleMapRelayout(homeMapInstance);
     homeMapLayer = window.L.layerGroup().addTo(homeMapInstance);
 
     window.L.tileLayer("https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png", {
@@ -168,6 +168,7 @@ function renderHomeMap(payload) {
   });
 
   homeMapInstance.fitBounds(bounds, { padding: [20, 20], maxZoom: 17 });
+  scheduleMapRelayout(homeMapInstance);
   mapMessageElement.textContent = `Showing ${payload.filters.availability} places${payload.filters.suburb ? ` in ${payload.filters.suburb}` : ""}.`;
 }
 
@@ -205,6 +206,17 @@ function formatStatus(value) {
 
 function compactOpenLabel(label) {
   return String(label || "").replace(/^Open now\s+/i, "");
+}
+
+function scheduleMapRelayout(map) {
+  if (!map) {
+    return;
+  }
+
+  const refresh = () => map.invalidateSize(false);
+  window.requestAnimationFrame(refresh);
+  window.setTimeout(refresh, 120);
+  window.setTimeout(refresh, 320);
 }
 
 async function loadHomePreview() {

@@ -103,7 +103,7 @@ const nearbyMapDataElement = document.getElementById("nearby-map-data");
 if (nearbyMapElement && nearbyMapDataElement && window.L) {
   const mapData = JSON.parse(nearbyMapDataElement.textContent);
   const map = window.L.map("nearby-map");
-  window.setTimeout(() => map.invalidateSize(), 0);
+  scheduleMapRelayout(map);
 
   window.L.tileLayer("https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png", {
     attribution: '&copy; OpenStreetMap contributors &copy; CARTO'
@@ -130,6 +130,8 @@ if (nearbyMapElement && nearbyMapDataElement && window.L) {
   } else {
     map.fitBounds(bounds, { padding: [24, 24] });
   }
+
+  scheduleMapRelayout(map);
 }
 
 function escapeHtml(value) {
@@ -139,4 +141,15 @@ function escapeHtml(value) {
     .replace(/>/g, "&gt;")
     .replace(/"/g, "&quot;")
     .replace(/'/g, "&#39;");
+}
+
+function scheduleMapRelayout(map) {
+  if (!map) {
+    return;
+  }
+
+  const refresh = () => map.invalidateSize(false);
+  window.requestAnimationFrame(refresh);
+  window.setTimeout(refresh, 120);
+  window.setTimeout(refresh, 320);
 }
