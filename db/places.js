@@ -233,11 +233,12 @@ async function listMapPlaces(rawQuery = {}) {
   await attachTags(places);
   await attachOpeningHours(places);
 
-  const suburbs = collectSuburbs(places);
-  const filteredPlaces = places
+  const availablePlaces = places
     .filter((place) => hasCoordinates(place))
+    .filter((place) => matchesMapAvailabilityMode(place.openingHours, filters));
+  const suburbs = collectSuburbsByPopularity(availablePlaces);
+  const filteredPlaces = availablePlaces
     .filter((place) => !filters.suburb || place.suburb === filters.suburb)
-    .filter((place) => matchesMapAvailabilityMode(place.openingHours, filters))
     .map((place) => {
       const selectedAvailability = getOpenSummaryForSelection(
         place.openingHours,
@@ -714,6 +715,30 @@ function collectSuburbs(places) {
       .map((place) => String(place.suburb || "").trim())
       .filter(Boolean)
   )].sort((left, right) => left.localeCompare(right));
+}
+
+function collectSuburbsByPopularity(places) {
+  const counts = new Map();
+
+  places.forEach((place) => {
+    const suburb = String(place.suburb || "").trim();
+
+    if (!suburb) {
+      return;
+    }
+
+    counts.set(suburb, (counts.get(suburb) || 0) + 1);
+  });
+
+  return [...counts.entries()]
+    .sort((left, right) => {
+      if (right[1] !== left[1]) {
+        return right[1] - left[1];
+      }
+
+      return left[0].localeCompare(right[0]);
+    })
+    .map(([suburb]) => suburb);
 }
 
 function statusRank(status) {

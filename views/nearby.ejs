@@ -8,28 +8,17 @@
 <% if (!location.hasCoordinates) { %>
   <section class="section-block">
     <form class="filters-panel" method="get" action="/nearby">
+      <input type="hidden" id="nearby-lat-input" name="lat" value="<%= location.latitude ?? "" %>" />
+      <input type="hidden" id="nearby-lng-input" name="lng" value="<%= location.longitude ?? "" %>" />
+      <div class="filters-actions">
+        <button class="button" type="button" id="nearby-use-location">Try location again</button>
+      </div>
+      <p class="empty-state" id="nearby-location-help">I don't know where you are. You might need to enable location services in your Safari settings. Or search manually below.</p>
       <div class="compact-search-form">
         <input id="nearby-search" type="text" name="search" value="<%= filters.search %>" placeholder="Search places, suburbs, or notes" />
-        <button class="button" type="submit">Search</button>
+        <button class="button button--secondary" type="submit">Search</button>
       </div>
-      <div class="filters-actions">
-        <button class="button button--secondary" type="button" id="nearby-use-location">Use my current location</button>
-      </div>
-      <details class="nearby-test-fields">
-        <summary>Testing only: enter coordinates manually</summary>
-        <div class="form-grid">
-          <label>
-            Latitude
-            <input type="text" id="nearby-lat-input" name="lat" value="<%= location.latitude ?? "" %>" placeholder="-33.8790" />
-          </label>
-          <label>
-            Longitude
-            <input type="text" id="nearby-lng-input" name="lng" value="<%= location.longitude ?? "" %>" placeholder="151.2067" />
-          </label>
-        </div>
-      </details>
     </form>
-    <p class="empty-state">Trying to get your current location. If nothing happens, use the button above or the testing coordinates section.</p>
   </section>
 <% } else { %>
   <section class="nearby-layout">

@@ -120,16 +120,18 @@ function renderNearbyPreview(places) {
   }
 
   nearbyPreviewElement.innerHTML = `<div class="home-preview-list">${places.map((place) => `
-    <article class="place-card place-card--compact nearby-card">
-      <div class="nearby-card__content">
-        <div class="place-card__title-row">
-          <h3 class="place-card__title"><a class="place-card__primary-link" href="/places/${encodeURIComponent(place.slug)}">${escapeHtml(place.name)}</a></h3>
-          ${place.menuUrl ? `<a class="menu-link" href="${escapeHtml(place.menuUrl)}" target="_blank" rel="noreferrer"><span class="menu-link__icon" aria-hidden="true"></span><span class="sr-only">Menu</span></a>` : ""}
+    <article class="place-card place-card--compact restaurant-card">
+      <a class="restaurant-card__overlay-link" href="/places/${encodeURIComponent(place.slug)}" aria-label="View ${escapeHtml(place.name)}"></a>
+      <div class="restaurant-card__header">
+        <div class="restaurant-card__title-block">
+          <h3 class="place-card__title">${escapeHtml(place.name)}</h3>
+          <p class="place-card__suburb">${escapeHtml(place.suburb || "")}</p>
         </div>
-        <p class="place-card__suburb">${escapeHtml(place.suburb || "")}</p>
+        ${place.menuUrl ? `<a class="menu-link restaurant-card__menu-link" href="${escapeHtml(place.menuUrl)}" target="_blank" rel="noreferrer"><span class="menu-link__icon" aria-hidden="true"></span><span class="sr-only">Menu</span></a>` : ""}
       </div>
-      ${place.openSummary ? `<p class="nearby-status-line">${escapeHtml(compactOpenLabel(place.openSummary.label))}</p>` : ""}
-      ${place.menuItems.length ? `<div class="nearby-card__group"><p class="nearby-card__label">On the menu</p><div class="nearby-card__menu-row">${place.menuItems.map((tag) => `<a class="menu-chip menu-chip--link" href="/plan?tags=${encodeURIComponent(tag.slug)}&meal=open">${escapeHtml(tag.name)}</a>`).join("")}</div></div>` : ""}
+      ${place.openSummary ? renderOpenSummary(place.openSummary) : ""}
+      ${place.categoryTags?.length ? `<div class="restaurant-card__tag-group"><div class="tag-row restaurant-card__tag-row">${place.categoryTags.map((tag) => `<span class="occasion-chip">${escapeHtml(tag.name)}</span>`).join("")}</div></div>` : ""}
+      ${place.menuItems.length ? `<div class="restaurant-card__tag-group"><p class="restaurant-card__tag-label">On the menu</p><div class="tag-row restaurant-card__tag-row">${place.menuItems.map((tag) => `<span class="menu-chip menu-chip--menu">${escapeHtml(tag.name)}</span>`).join("")}</div></div>` : ""}
     </article>
   `).join("")}</div>`;
 }
@@ -204,8 +206,13 @@ function formatStatus(value) {
     .join(" ");
 }
 
-function compactOpenLabel(label) {
-  return String(label || "").replace(/^Open now\s+/i, "");
+function renderOpenSummary(openSummary) {
+  const primary = escapeHtml(openSummary.primaryLabel || openSummary.label || "");
+  const secondary = openSummary.secondaryLabel
+    ? `<p class="open-status__secondary">${escapeHtml(openSummary.secondaryLabel)}</p>`
+    : "";
+
+  return `<div class="open-status"><p class="nearby-status-line ${openSummary.isOpen ? "open-status__primary--open" : "open-status__primary--closed"}">${primary}</p>${secondary}</div>`;
 }
 
 function scheduleMapRelayout(map) {

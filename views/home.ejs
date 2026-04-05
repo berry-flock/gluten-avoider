@@ -19,7 +19,7 @@
 </section>
 
 <div class="home-module-grid">
-  <section class="section-block home-module">
+  <section class="section-block home-module home-module--nearby">
     <div class="section-heading">
       <h2><a class="module-link" href="/nearby"><span class="module-icon module-icon--pink"></span>Nearby now</a></h2>
     </div>
@@ -35,38 +35,50 @@
     </div>
   </section>
 
-  <section class="section-block home-module">
-    <div class="section-heading">
-      <h2><a class="module-link" href="/plan"><span class="module-icon module-icon--yellow"></span>Plan later</a></h2>
-    </div>
-
-    <form class="stack-form home-plan-form" method="get" action="/plan">
-      <label>
-        Day
-        <select name="day">
-          <% dayLabels.forEach((dayLabel, dayIndex) => { %>
-            <option value="<%= dayIndex %>" <%= dayIndex === defaultPlanDay ? "selected" : "" %>><%= dayLabel %></option>
-          <% }) %>
-        </select>
-      </label>
-      <div class="meal-choice-group">
-        <input type="hidden" name="meal" value="<%= defaultPlanMeal %>" />
-        <button class="button <%= defaultPlanMeal === "breakfast" ? "" : "button--secondary" %>" type="button" data-home-plan-meal="breakfast">Breakfast</button>
-        <button class="button <%= defaultPlanMeal === "lunch" ? "" : "button--secondary" %>" type="button" data-home-plan-meal="lunch">Lunch</button>
-        <button class="button <%= defaultPlanMeal === "dinner" ? "" : "button--secondary" %>" type="button" data-home-plan-meal="dinner">Dinner</button>
-      </div>
-      <label class="sr-only" for="home-search">Search places</label>
-      <div class="compact-search-form">
-        <input id="home-search" type="text" name="search" placeholder="Search places, suburbs, or notes" />
-        <button class="button" type="submit">Search</button>
+  <div class="home-module-stack">
+    <section class="section-block home-module home-module--plan">
+      <div class="section-heading">
+        <h2><a class="module-link" href="/plan"><span class="module-icon module-icon--yellow"></span>Plan later</a></h2>
       </div>
 
-      <div class="filters-actions">
-        <a class="button button--secondary" href="/plan#plan-filters">Search by tags</a>
-        <a class="button button--secondary" href="/plan">Show everything</a>
+      <form class="stack-form home-plan-form" method="get" action="/plan">
+        <label>
+          Day
+          <select name="day">
+            <% dayLabels.forEach((dayLabel, dayIndex) => { %>
+              <option value="<%= dayIndex %>" <%= dayIndex === defaultPlanDay ? "selected" : "" %>><%= dayLabel %></option>
+            <% }) %>
+          </select>
+        </label>
+        <div class="meal-choice-group">
+          <input type="hidden" name="meal" value="<%= defaultPlanMeal %>" />
+          <button class="button <%= defaultPlanMeal === "breakfast" ? "" : "button--secondary" %>" type="button" data-home-plan-meal="breakfast">Breakfast</button>
+          <button class="button <%= defaultPlanMeal === "lunch" ? "" : "button--secondary" %>" type="button" data-home-plan-meal="lunch">Lunch</button>
+          <button class="button <%= defaultPlanMeal === "dinner" ? "" : "button--secondary" %>" type="button" data-home-plan-meal="dinner">Dinner</button>
+        </div>
+        <label class="sr-only" for="home-search">Search places</label>
+        <div class="compact-search-form">
+          <input id="home-search" type="text" name="search" placeholder="Search places, suburbs, or notes" />
+          <button class="button button--secondary" type="submit">Search</button>
+        </div>
+
+        <div class="filters-actions">
+          <a class="button button--secondary" href="/plan#plan-filters">Search by tags</a>
+          <a class="button button--secondary" href="/plan">Show everything</a>
+        </div>
+      </form>
+    </section>
+
+    <section class="section-block home-module home-module--food">
+      <div class="section-heading">
+        <h2><span class="module-icon module-icon--peach"></span>Food feelings</h2>
+        <button class="icon-button" type="button" id="food-feelings-refresh" aria-label="Refresh food feelings">
+          <span class="icon-refresh" aria-hidden="true"></span>
+        </button>
       </div>
-    </form>
-  </section>
+      <div class="tag-row" id="food-feelings-list" data-food-feelings='<%- JSON.stringify(foodFeelingTags || []) %>'></div>
+    </section>
+  </div>
 
   <section class="section-block home-module home-module--map">
     <div class="section-heading">
@@ -86,35 +98,7 @@
     <div id="home-map" class="nearby-map"></div>
     <p id="home-map-message" class="section-copy">Trying to center the map on your current location.</p>
   </section>
-
-  <section class="section-block home-module">
-    <div class="section-heading">
-      <h2><span class="module-icon module-icon--peach"></span>Food feelings</h2>
-      <button class="icon-button" type="button" id="food-feelings-refresh" aria-label="Refresh food feelings">
-        <span class="icon-refresh" aria-hidden="true"></span>
-      </button>
-    </div>
-    <div class="tag-row" id="food-feelings-list" data-food-feelings='<%- JSON.stringify(foodFeelingTags || []) %>'></div>
-  </section>
 </div>
-
-<section class="section-block home-collections-panel">
-  <div class="section-heading">
-    <h2><span class="module-icon module-icon--lavender"></span>Collections</h2>
-  </div>
-  <div class="home-collection-grid home-collection-grid--panel">
-    <a class="home-collection-card" href="/plan?status_preference=trusted">
-      <span class="eyebrow">Saved</span>
-      <h3>Your regulars</h3>
-      <p class="section-copy">Go straight to places you already trust.</p>
-    </a>
-    <a class="home-collection-card" href="/plan?status_preference=want_to_try">
-      <span class="eyebrow">Saved</span>
-      <h3>Want to try</h3>
-      <p class="section-copy">Browse the short list for something new.</p>
-    </a>
-  </div>
-</section>
 
 <script src="/leaflet.js?v=<%= assetVersion %>"></script>
 <script src="/home.js?v=<%= assetVersion %>"></script>

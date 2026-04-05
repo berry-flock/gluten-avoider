@@ -5,56 +5,64 @@
     <div>
       <p class="eyebrow">Restaurant</p>
       <h1><%= place.name %></h1>
+      <div class="place-detail__meta">
+        <span class="place-detail__status"><%= formatStatus(place.status) %></span>
+        <% if (currentAdmin) { %>
+          <a class="text-link" href="/admin/places/<%= place.id %>/edit">Edit</a>
+        <% } %>
+      </div>
       <% if (place.notes_public) { %>
-        <p><%= place.notes_public %></p>
+        <p class="place-detail__note"><%= place.notes_public %></p>
       <% } %>
-    </div>
-    <div class="place-detail__meta">
-      <span class="badge <%= badgeClass('status', place.status) %>"><%= formatStatus(place.status) %></span>
-      <% if (currentAdmin) { %>
-        <a class="text-link" href="/admin/places/<%= place.id %>/edit">Edit</a>
+      <% const categoryTags = tagsByGroup(place.tags, "category"); %>
+      <% if (categoryTags.length) { %>
+        <div class="tag-row place-detail__occasion-row">
+          <% categoryTags.forEach((tag) => { %>
+            <span class="occasion-chip"><%= tag.name %></span>
+          <% }) %>
+        </div>
       <% } %>
     </div>
   </div>
 
-  <section class="detail-block">
-    <h2>Address</h2>
-    <% if (place.address) { %>
-      <p><%= place.address %></p>
-      <% if (place.suburb) { %>
-        <p class="place-card__suburb"><%= place.suburb %></p>
-      <% } %>
-      <div class="card-inline-links">
-        <a class="text-link" href="<%= buildAppleMapsUrl(place) %>" target="_blank" rel="noreferrer">Apple Maps</a>
-        <a class="text-link" href="<%= buildGoogleMapsUrl(place) %>" target="_blank" rel="noreferrer">Google Maps</a>
-      </div>
-    <% } else { %>
-      <p class="empty-state">No street address saved yet.</p>
-    <% } %>
-  </section>
-
   <% const menuItems = tagsByGroup(place.tags, "menu_items"); %>
   <% if (menuItems.length) { %>
-    <section class="detail-block">
-      <h2>Featured menu items</h2>
-      <div class="tag-row">
+    <section class="detail-block detail-block--first">
+      <h2>On the menu</h2>
+      <div class="tag-row place-detail__menu-row">
         <% menuItems.forEach((tag) => { %>
-          <a class="tag-pill tag-pill--link" href="/plan?tags=<%= encodeURIComponent(tag.slug) %>"><%= tag.name %></a>
+          <span class="menu-chip menu-chip--menu"><%= tag.name %></span>
         <% }) %>
       </div>
     </section>
   <% } %>
 
-  <% if (place.openSummary) { %>
-    <section class="detail-block">
-      <h2>Opening status</h2>
-      <p class="hours-pill <%= isOpenNowClass(place.openSummary) %>"><%= place.openSummary.label %></p>
+  <section class="detail-block <%= !menuItems.length ? 'detail-block--first' : '' %>">
+    <h2>Address</h2>
+    <% if (place.address) { %>
+      <a class="place-detail__address-link" href="<%= buildGoogleMapsUrl(place) %>" target="_blank" rel="noreferrer">
+        <span><%= place.address %></span>
+        <% if (place.suburb) { %>
+          <span class="place-detail__address-suburb"><%= place.suburb %></span>
+        <% } %>
+      </a>
+    <% } else { %>
+      <p class="empty-state">No street address saved yet.</p>
+    <% } %>
+  </section>
+
+  <% if (place.website_url) { %>
+    <section class="detail-block detail-block--menu-link">
+      <a class="button" href="<%= place.website_url %>" target="_blank" rel="noreferrer">Menu</a>
     </section>
   <% } %>
 
   <% if (place.openingHours && place.openingHours.length) { %>
     <section class="detail-block">
       <h2>Opening hours</h2>
+      <% if (place.openSummary) { %>
+        <%- include("../partials/open-status", { openSummary: place.openSummary, primaryClass: "nearby-status-line" }) %>
+      <% } %>
       <dl class="hours-list">
         <% dayLabels.forEach((dayLabel, dayIndex) => { %>
           <div class="hours-row">
@@ -63,24 +71,6 @@
           </div>
         <% }) %>
       </dl>
-    </section>
-  <% } %>
-
-  <% if (place.website_url) { %>
-    <section class="detail-block detail-block--menu-link">
-      <a class="button" href="<%= place.website_url %>" target="_blank" rel="noreferrer">Menu</a>
-    </section>
-  <% } %>
-
-  <% const categoryTags = tagsByGroup(place.tags, "category"); %>
-  <% if (categoryTags.length) { %>
-    <section class="detail-block">
-      <h2>Category</h2>
-      <div class="tag-row">
-        <% categoryTags.forEach((tag) => { %>
-          <a class="tag-pill tag-pill--link" href="/plan?tags=<%= encodeURIComponent(tag.slug) %>"><%= tag.name %></a>
-        <% }) %>
-      </div>
     </section>
   <% } %>
 

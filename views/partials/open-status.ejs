@@ -1,0 +1,8 @@
+<% if (openSummary) { %>
+  <div class="open-status">
+    <p class="<%= primaryClass || 'nearby-status-line' %> <%= openSummary.isOpen ? 'open-status__primary--open' : 'open-status__primary--closed' %>"><%= openSummary.primaryLabel || openSummary.label %></p>
+    <% if (openSummary.secondaryLabel) { %>
+      <p class="open-status__secondary"><%= openSummary.secondaryLabel %></p>
+    <% } %>
+  </div>
+<% } %>

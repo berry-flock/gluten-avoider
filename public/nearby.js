@@ -28,41 +28,53 @@ function geolocationErrorMessage(error) {
   return `${label}${error.message ? `: ${error.message}` : ""}`;
 }
 
+function locationFallbackMessage(error) {
+  const baseMessage = "I don't know where you are. You might need to enable location services in your Safari settings. Or search manually below.";
+  return error ? `${baseMessage} ${geolocationErrorMessage(error)}` : baseMessage;
+}
+
+function requestNearbyLocation() {
+  if (!nearbyLocationButton || !nearbyLatInput || !nearbyLngInput) {
+    return;
+  }
+
+  if (!navigator.geolocation) {
+    setLocationMessage(locationFallbackMessage());
+    return;
+  }
+
+  if (geolocationNeedsHttps()) {
+    setLocationMessage("I don't know where you are. Location access on the live site needs HTTPS. Or search manually below.");
+    return;
+  }
+
+  nearbyLocationButton.disabled = true;
+  nearbyLocationButton.textContent = "Trying location...";
+
+  navigator.geolocation.getCurrentPosition(
+    (position) => {
+      nearbyLatInput.value = position.coords.latitude.toFixed(6);
+      nearbyLngInput.value = position.coords.longitude.toFixed(6);
+      nearbyLocationButton.disabled = false;
+      nearbyLocationButton.textContent = "Try location again";
+      nearbyLatInput.form.submit();
+    },
+    (error) => {
+      window.sessionStorage.setItem("nearby-autolocate-attempted", "denied");
+      nearbyLocationButton.disabled = false;
+      nearbyLocationButton.textContent = "Try location again";
+      setLocationMessage(locationFallbackMessage(error));
+    },
+    {
+      enableHighAccuracy: true,
+      maximumAge: 0,
+      timeout: 20000
+    }
+  );
+}
+
 if (nearbyLocationButton && nearbyLatInput && nearbyLngInput) {
-  nearbyLocationButton.addEventListener("click", () => {
-    if (!navigator.geolocation) {
-      setLocationMessage("Geolocation is not available in this browser.");
-      return;
-    }
-
-    if (geolocationNeedsHttps()) {
-      setLocationMessage("Current location on the live site needs HTTPS. It will work once the domain has SSL.");
-      return;
-    }
-
-    nearbyLocationButton.disabled = true;
-    nearbyLocationButton.textContent = "Getting location...";
-
-    navigator.geolocation.getCurrentPosition(
-      (position) => {
-        nearbyLatInput.value = position.coords.latitude.toFixed(6);
-        nearbyLngInput.value = position.coords.longitude.toFixed(6);
-        nearbyLocationButton.disabled = false;
-        nearbyLocationButton.textContent = "Use my current location";
-        nearbyLatInput.form.submit();
-      },
-      (error) => {
-        nearbyLocationButton.disabled = false;
-        nearbyLocationButton.textContent = "Use my current location";
-        setLocationMessage(`Could not get your current location. ${geolocationErrorMessage(error)}`);
-      },
-      {
-        enableHighAccuracy: true,
-        maximumAge: 0,
-        timeout: 20000
-      }
-    );
-  });
+  nearbyLocationButton.addEventListener("click", requestNearbyLocation);
 }
 
 if (
@@ -77,23 +89,7 @@ if (
 
   if (!alreadyTried) {
     window.sessionStorage.setItem("nearby-autolocate-attempted", "1");
-
-    navigator.geolocation.getCurrentPosition(
-      (position) => {
-        nearbyLatInput.value = position.coords.latitude.toFixed(6);
-        nearbyLngInput.value = position.coords.longitude.toFixed(6);
-        nearbyLatInput.form.submit();
-      },
-      (error) => {
-        window.sessionStorage.setItem("nearby-autolocate-attempted", "denied");
-        setLocationMessage(`Automatic location failed. ${geolocationErrorMessage(error)}`);
-      },
-      {
-        enableHighAccuracy: true,
-        maximumAge: 0,
-        timeout: 20000
-      }
-    );
+    requestNearbyLocation();
   }
 }
 

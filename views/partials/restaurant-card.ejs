@@ -1,0 +1,42 @@
+<article class="place-card restaurant-card">
+  <a class="restaurant-card__overlay-link" href="/places/<%= place.slug %>" aria-label="View <%= place.name %>"></a>
+
+  <div class="restaurant-card__header">
+    <div class="restaurant-card__title-block">
+      <h3 class="place-card__title"><%= place.name %></h3>
+      <p class="place-card__suburb"><%= place.suburb %></p>
+    </div>
+
+    <% if (place.website_url) { %>
+      <a class="menu-link restaurant-card__menu-link" href="<%= place.website_url %>" target="_blank" rel="noreferrer">
+        <span class="menu-link__icon" aria-hidden="true"></span>
+        <span class="sr-only">Menu</span>
+      </a>
+    <% } %>
+  </div>
+
+  <%- include("open-status", { openSummary: place.openSummary, primaryClass: "nearby-status-line" }) %>
+
+  <% const categoryTags = tagsByGroup(place.tags || [], "category"); %>
+  <% if (categoryTags.length) { %>
+    <div class="restaurant-card__tag-group">
+      <div class="tag-row restaurant-card__tag-row">
+        <% categoryTags.slice(0, 4).forEach((tag) => { %>
+          <span class="occasion-chip"><%= tag.name %></span>
+        <% }) %>
+      </div>
+    </div>
+  <% } %>
+
+  <% const menuItems = tagsByGroup(place.tags || [], "menu_items"); %>
+  <% if (menuItems.length) { %>
+    <div class="restaurant-card__tag-group">
+      <p class="restaurant-card__tag-label">On the menu</p>
+      <div class="tag-row restaurant-card__tag-row">
+        <% menuItems.slice(0, 5).forEach((tag) => { %>
+          <span class="menu-chip menu-chip--menu"><%= tag.name %></span>
+        <% }) %>
+      </div>
+    </div>
+  <% } %>
+</article>

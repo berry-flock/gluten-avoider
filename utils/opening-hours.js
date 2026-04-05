@@ -25,14 +25,21 @@ function getOpenSummaryForSelection(openingHours, dayOfWeek, minutes, options = 
 
   if (selection.isOpen && selection.entry) {
     const closeMinutes = timeToMinutes(selection.entry.close_time);
+    const primaryLabel = closeMinutes >= 24 * 60 && selection.sourceDay !== dayOfWeek
+      ? `Open until ${formatTime(selection.entry.close_time)}`
+      : closeMinutes >= 24 * 60
+        ? `Open until ${DAY_LABELS[(dayOfWeek + 1) % 7]} ${formatTime(selection.entry.close_time)}`
+        : `Open until ${formatTime(selection.entry.close_time)}`;
+    const secondaryLabel = selection.nextEntry && selection.nextEntry.offsetDays === 0
+      ? `Reopening ${formatTime(selection.nextEntry.open_time)}`
+      : "";
 
     return {
       isOpen: true,
-      label: closeMinutes >= 24 * 60 && selection.sourceDay !== dayOfWeek
-        ? `${prefix} until ${formatTime(selection.entry.close_time)}`
-        : closeMinutes >= 24 * 60
-          ? `${prefix} until ${DAY_LABELS[(dayOfWeek + 1) % 7]} ${formatTime(selection.entry.close_time)}`
-          : `${prefix} until ${formatTime(selection.entry.close_time)}`
+      label: secondaryLabel ? `${primaryLabel}. ${secondaryLabel}` : primaryLabel,
+      prefix,
+      primaryLabel,
+      secondaryLabel
     };
   }
 
@@ -45,13 +52,19 @@ function getOpenSummaryForSelection(openingHours, dayOfWeek, minutes, options = 
 
     return {
       isOpen: false,
-      label: `Closed. Opens ${relativeDayLabel} at ${formatTime(selection.nextEntry.open_time)}`
+      label: `Closed. Opens ${relativeDayLabel} at ${formatTime(selection.nextEntry.open_time)}`,
+      prefix,
+      primaryLabel: "Closed",
+      secondaryLabel: `Opens ${relativeDayLabel} at ${formatTime(selection.nextEntry.open_time)}`
     };
   }
 
   return {
     isOpen: false,
-    label: "Closed"
+    label: "Closed",
+    prefix,
+    primaryLabel: "Closed",
+    secondaryLabel: ""
   };
 }
 

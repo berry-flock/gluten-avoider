@@ -64,6 +64,9 @@ router.get("/home/preview-data", async (req, res, next) => {
         suburb: place.suburb
       })),
       nearbyPlaces: nearbyPlaces.map((place) => ({
+        categoryTags: (place.tags || [])
+          .filter((tag) => tag.tag_group === "category")
+          .slice(0, 4),
         menuItems: (place.tags || [])
           .filter((tag) => tag.tag_group === "menu_items")
           .slice(0, 3),

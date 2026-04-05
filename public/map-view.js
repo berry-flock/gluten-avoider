@@ -14,27 +14,58 @@ if (mapViewElement && mapViewDataElement && window.L) {
 
   scheduleMapRelayout(map);
 
-  if (!mapData.places.length) {
+  if (!mapData.location?.hasCoordinates && navigator.geolocation && !geolocationNeedsHttps()) {
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const nextUrl = new URL(window.location.href);
+        nextUrl.searchParams.set("lat", position.coords.latitude.toFixed(6));
+        nextUrl.searchParams.set("lng", position.coords.longitude.toFixed(6));
+        window.location.replace(nextUrl.toString());
+      },
+      () => {},
+      {
+        enableHighAccuracy: true,
+        maximumAge: 0,
+        timeout: 20000
+      }
+    );
+  }
+
+  mapData.places.forEach((place) => {
+    const marker = window.L.marker([place.lat, place.lng], {
+      icon: makeStatusIcon(place.isOpen)
+    }).addTo(map);
+    markersBySlug.set(place.slug, marker);
+    marker.bindPopup(
+      `<strong>${escapeHtml(place.name)}</strong><br>${escapeHtml(place.suburb)}<br><a href="/places/${encodeURIComponent(place.slug)}">View details</a>`
+    );
+    marker.on("click", () => focusCard(place.slug));
+  });
+
+  if (mapData.location?.hasCoordinates) {
+    window.L.marker([mapData.location.lat, mapData.location.lng]).addTo(map).bindPopup("You are here");
+    if (mapData.places.length) {
+      const focusPlaces = mapData.places
+        .filter((place) => Number.isFinite(place.distanceKm))
+        .sort((left, right) => left.distanceKm - right.distanceKm)
+        .slice(0, 8);
+      const bounds = [
+        [mapData.location.lat, mapData.location.lng],
+        ...(focusPlaces.length ? focusPlaces : mapData.places).map((place) => [place.lat, place.lng])
+      ];
+      map.fitBounds(bounds, { padding: [20, 20], maxZoom: 17 });
+    } else {
+      map.setView([mapData.location.lat, mapData.location.lng], 13);
+    }
+  } else if (!mapData.places.length) {
     map.setView([-33.8688, 151.2093], 10);
   } else {
-    const bounds = [];
-
-    mapData.places.forEach((place) => {
-      const marker = window.L.marker([place.lat, place.lng], {
-        icon: makeStatusIcon(place.isOpen)
-      }).addTo(map);
-      markersBySlug.set(place.slug, marker);
-      marker.bindPopup(
-        `<strong>${escapeHtml(place.name)}</strong><br>${escapeHtml(place.suburb)}<br><a href="/places/${encodeURIComponent(place.slug)}">View details</a>`
-      );
-      marker.on("click", () => focusCard(place.slug));
-      bounds.push([place.lat, place.lng]);
-    });
-
+    const bounds = mapData.places.map((place) => [place.lat, place.lng]);
     map.fitBounds(bounds, { padding: [24, 24] });
-    updateVisibleCards();
-    map.on("moveend", updateVisibleCards);
   }
+
+  updateVisibleCards();
+  map.on("moveend", updateVisibleCards);
 
   scheduleMapRelayout(map);
 
@@ -83,6 +114,10 @@ function makeStatusIcon(isOpen) {
     iconSize: [20, 20],
     popupAnchor: [0, -18]
   });
+}
+
+function geolocationNeedsHttps() {
+  return !window.isSecureContext && window.location.hostname !== "localhost" && window.location.hostname !== "127.0.0.1";
 }
 
 function escapeHtml(value) {

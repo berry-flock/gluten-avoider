@@ -147,6 +147,11 @@ a {
   gap: 1rem;
 }
 
+.home-module-stack {
+  display: grid;
+  gap: 1rem;
+}
+
 .home-intro-card h1 {
   margin: 0;
   max-width: 12ch;
@@ -168,7 +173,7 @@ a {
   display: grid;
   gap: 0.8rem;
   padding: 1.05rem;
-  margin-bottom: 0.8rem;
+  margin-bottom: 0;
 }
 
 .home-module--map {
@@ -337,46 +342,61 @@ a {
 
 .place-card {
   position: relative;
-  padding: 1rem;
+  padding: 1.05rem;
   display: grid;
-  gap: 0.8rem;
+  gap: 0.95rem;
+  overflow: hidden;
+  transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
+  cursor: pointer;
 }
 
 .place-card--compact {
   padding: 0.9rem;
 }
 
-.place-card__top {
+.place-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 7px 7px 0 rgba(23, 20, 17, 0.14);
+  border-color: #a88f73;
+}
+
+.place-card:focus-within {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.restaurant-card__overlay-link {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  border-radius: inherit;
+}
+
+.restaurant-card__header {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
   gap: 0.75rem;
+  position: relative;
+  z-index: 2;
 }
 
-.place-card__title,
-.place-card__title a {
+.restaurant-card__title-block {
+  min-width: 0;
+}
+
+.place-card__title {
   margin: 0;
-  text-decoration: none;
-  font: 800 1.14rem/1.1 var(--font-body);
-}
-
-.place-card__title-row {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: baseline;
-  gap: 0.55rem;
-}
-
-.place-card__primary-link {
-  text-decoration: underline;
-  text-decoration-thickness: 1.5px;
-  text-underline-offset: 0.14em;
+  color: var(--ink);
+  font: 800 1.18rem/1.08 var(--font-body);
 }
 
 .place-card__suburb {
-  margin: 0.28rem 0 0;
+  margin: 0.35rem 0 0;
   color: var(--muted);
-  font-size: 0.94rem;
+  font: 700 0.86rem/1.2 var(--font-display);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
 }
 
 .place-card__badges,
@@ -394,6 +414,19 @@ a {
 
 .place-card__badges {
   margin: 0.8rem 0 0.65rem;
+}
+
+.place-detail__meta {
+  margin-top: 0.45rem;
+  align-items: center;
+  gap: 0.7rem;
+}
+
+.place-detail__status {
+  color: var(--muted);
+  font: 800 0.72rem/1.2 var(--font-display);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
 }
 
 .badge,
@@ -430,6 +463,55 @@ a {
   font: 800 0.68rem/1.2 var(--font-display);
   text-transform: uppercase;
   letter-spacing: 0.06em;
+}
+
+.restaurant-card__menu-link,
+.open-status,
+.restaurant-card__tag-group {
+  position: relative;
+  z-index: 2;
+}
+
+.restaurant-card__header,
+.open-status,
+.restaurant-card__tag-group {
+  pointer-events: none;
+}
+
+.restaurant-card__menu-link {
+  pointer-events: auto;
+}
+
+.restaurant-card__tag-group {
+  display: grid;
+  gap: 0.42rem;
+}
+
+.restaurant-card__tag-row {
+  gap: 0.5rem;
+}
+
+.restaurant-card__tag-label {
+  margin: 0;
+  color: var(--muted);
+  font: 700 0.66rem/1.2 var(--font-display);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.occasion-chip {
+  display: inline-flex;
+  align-items: center;
+  min-height: 1.7rem;
+  padding: 0.28rem 0.7rem;
+  border: 2px solid #cfb087;
+  border-radius: 999px;
+  background: linear-gradient(180deg, #fff1d6, #f4d4a3);
+  color: #5d3f17;
+  font: 800 0.64rem/1.2 var(--font-display);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  box-shadow: inset 0 -1px 0 rgba(93, 63, 23, 0.08);
 }
 
 .meta-pill--soft {
@@ -480,7 +562,7 @@ a {
 }
 
 .hours-pill {
-  margin: 0 0 0.85rem;
+  margin: 0 0 1rem;
   width: fit-content;
 }
 
@@ -556,6 +638,10 @@ a {
 .compact-search-form,
 .tag-picker__input-row {
   grid-template-columns: minmax(0, 1fr) auto;
+}
+
+.compact-search-form > .button {
+  margin-top: 0.42rem;
 }
 
 .form-grid__full {
@@ -820,35 +906,6 @@ textarea {
   margin: 0.55rem 0 0;
 }
 
-.nearby-card {
-  display: grid;
-  gap: 0.95rem;
-}
-
-.nearby-card__content {
-  display: grid;
-  gap: 0.35rem;
-}
-
-.nearby-card__group {
-  display: grid;
-  gap: 0.42rem;
-}
-
-.nearby-card__menu-row {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.55rem;
-}
-
-.nearby-card__label {
-  margin: 0;
-  color: var(--muted);
-  font: 700 0.66rem/1.2 var(--font-display);
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-}
-
 .nearby-card__meta-line {
   margin: 0;
   color: var(--muted);
@@ -955,10 +1012,39 @@ textarea {
   text-decoration: none;
 }
 
+.menu-chip--menu {
+  border: 0;
+  border-radius: 12px;
+  background: #2f6a4b;
+  color: #f6fff8;
+  font: 800 0.67rem/1.2 var(--font-display);
+  letter-spacing: 0.05em;
+  box-shadow: none;
+}
+
 .nearby-status-line {
   margin: 0;
   color: #2f6a4b;
   font: 800 0.98rem/1.3 var(--font-body);
+}
+
+.open-status {
+  display: grid;
+  gap: 0.18rem;
+}
+
+.open-status .open-status__primary--open {
+  color: #2f6a4b;
+}
+
+.open-status .open-status__primary--closed {
+  color: #6f5b40;
+}
+
+.open-status__secondary {
+  margin: 0;
+  color: var(--muted);
+  font: 600 0.84rem/1.3 var(--font-body);
 }
 
 .home-map-controls,
@@ -1129,8 +1215,36 @@ textarea {
   width: fit-content;
 }
 
+.place-detail__note {
+  margin: 0.7rem 0 0;
+}
+
+.place-detail__occasion-row,
+.place-detail__menu-row {
+  margin-top: 0.8rem;
+}
+
+.place-detail__address-link {
+  display: inline-grid;
+  gap: 0.2rem;
+  color: inherit;
+  text-decoration: none;
+}
+
+.place-detail__address-link:hover {
+  text-decoration: underline;
+  text-underline-offset: 0.14em;
+}
+
+.place-detail__address-suburb {
+  color: var(--muted);
+  font: 700 0.86rem/1.2 var(--font-display);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
 .hours-list {
-  margin: 0;
+  margin: 0.35rem 0 0.5rem;
 }
 
 .hours-row {
@@ -1210,14 +1324,19 @@ textarea {
 
   .home-module-grid {
     grid-template-columns: 1fr 1fr 1.06fr;
+    align-items: start;
   }
 
-  .home-collection-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+  .home-module--nearby {
+    grid-column: 1;
+  }
+
+  .home-module-stack {
+    grid-column: 2;
   }
 
   .home-module--map {
-    grid-column: auto;
+    grid-column: 3;
   }
 
   .card-grid {
