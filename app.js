@@ -18,16 +18,10 @@ app.use(helmet({
   contentSecurityPolicy: {
     directives: {
       defaultSrc: ["'self'"],
-      scriptSrc: [
-        "'self'",
-        // Leaflet — matches the integrity hash in map/nearby templates
-        "'sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo='"
-      ],
+      scriptSrc: ["'self'"],
       styleSrc: [
         "'self'",
         "https://fonts.googleapis.com",
-        // Leaflet CSS — matches integrity hash in map/nearby templates
-        "'sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY='",
         "'unsafe-inline'" // Leaflet injects inline styles for marker positioning
       ],
       fontSrc: ["'self'", "https://fonts.gstatic.com"],
