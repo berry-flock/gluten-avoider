@@ -142,6 +142,7 @@ function renderHomeMap(payload) {
 
   if (!homeMapInstance) {
     homeMapInstance = window.L.map("home-map");
+    window.setTimeout(() => homeMapInstance.invalidateSize(), 0);
     homeMapLayer = window.L.layerGroup().addTo(homeMapInstance);
 
     window.L.tileLayer("https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png", {

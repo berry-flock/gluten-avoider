@@ -103,6 +103,7 @@ const nearbyMapDataElement = document.getElementById("nearby-map-data");
 if (nearbyMapElement && nearbyMapDataElement && window.L) {
   const mapData = JSON.parse(nearbyMapDataElement.textContent);
   const map = window.L.map("nearby-map");
+  window.setTimeout(() => map.invalidateSize(), 0);
 
   window.L.tileLayer("https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png", {
     attribution: '&copy; OpenStreetMap contributors &copy; CARTO'

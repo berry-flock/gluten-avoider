@@ -12,6 +12,8 @@ if (mapViewElement && mapViewDataElement && window.L) {
     attribution: '&copy; OpenStreetMap contributors &copy; CARTO'
   }).addTo(map);
 
+  window.setTimeout(() => map.invalidateSize(), 0);
+
   if (!mapData.places.length) {
     map.setView([-33.8688, 151.2093], 10);
   } else {
