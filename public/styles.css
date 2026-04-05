@@ -1008,7 +1008,7 @@ textarea {
 
 .nearby-map,
 .map-view-canvas {
-  min-height: 300px;
+  height: 300px;
   border: 1.5px solid var(--line);
   border-radius: 18px;
   overflow: hidden;
@@ -1016,7 +1016,7 @@ textarea {
 }
 
 .map-view-canvas {
-  min-height: 420px;
+  height: 420px;
 }
 
 .admin-table-wrap {
