@@ -25,6 +25,8 @@ app.use(helmet({
       styleSrc: [
         "'self'",
         "https://fonts.googleapis.com",
+        // Leaflet CSS — matches integrity hash in map/nearby templates
+        "'sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY='",
         "'unsafe-inline'" // Leaflet injects inline styles for marker positioning
       ],
       fontSrc: ["'self'", "https://fonts.gstatic.com"],
