@@ -1,6 +1,7 @@
 require("dotenv").config();
 
 const express = require("express");
+const helmet = require("helmet");
 const session = require("express-session");
 const path = require("path");
 const adminRoutes = require("./routes/admin");
@@ -12,6 +13,7 @@ const app = express();
 app.set("view engine", "ejs");
 app.set("views", path.join(__dirname, "views"));
 
+app.use(helmet());
 app.use(express.urlencoded({ extended: true }));
 app.use(
   session({
@@ -20,7 +22,9 @@ app.use(
     saveUninitialized: false,
     cookie: {
       httpOnly: true,
-      sameSite: "lax"
+      maxAge: 8 * 60 * 60 * 1000,
+      sameSite: "strict",
+      secure: process.env.NODE_ENV === "production"
     }
   })
 );

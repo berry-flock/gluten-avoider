@@ -1,6 +1,27 @@
+const ALLOWED_SHARE_DOMAINS = ["apple.com", "google.com", "goo.gl"];
+
+function isAllowedShareUrl(urlString) {
+  try {
+    const url = new URL(urlString);
+    if (url.protocol !== "https:") return false;
+    return ALLOWED_SHARE_DOMAINS.some(
+      (domain) => url.hostname === domain || url.hostname.endsWith("." + domain)
+    );
+  } catch {
+    return false;
+  }
+}
+
 async function enrichPlaceFormFromShareLink(formData) {
   if (!formData.share_url) {
     return { errorMessage: "", formData };
+  }
+
+  if (!isAllowedShareUrl(formData.share_url)) {
+    return {
+      errorMessage: "Share link must be from Apple Maps or Google Maps.",
+      formData
+    };
   }
 
   try {

@@ -1,5 +1,6 @@
 const bcrypt = require("bcrypt");
 const express = require("express");
+const rateLimit = require("express-rate-limit");
 const { exportPlacesCsv, importPlacesCsv } = require("../db/admin-backup");
 const {
   createAdminPlace,
@@ -35,6 +36,20 @@ const { buildTagFormData, parseTagForm, validateTagForm } = require("../utils/ta
 
 const router = express.Router();
 
+const loginLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 10,
+  standardHeaders: true,
+  legacyHeaders: false,
+  handler: (req, res) => {
+    res.status(429).render("admin/login", {
+      errorMessage: "Too many login attempts. Please try again in 15 minutes.",
+      formData: { username: String(req.body.username || "") },
+      pageTitle: "Admin login"
+    });
+  }
+});
+
 router.get("/admin/login", (req, res) => {
   if (req.session.adminUser) {
     res.redirect("/admin");
@@ -49,7 +64,7 @@ router.get("/admin/login", (req, res) => {
   });
 });
 
-router.post("/admin/login", async (req, res, next) => {
+router.post("/admin/login", loginLimiter, async (req, res, next) => {
   const username = String(req.body.username || "").trim();
   const password = String(req.body.password || "");
 
