@@ -69,7 +69,10 @@
           <span class="icon-refresh" aria-hidden="true"></span>
         </button>
       </div>
-      <div class="tag-row" id="food-feelings-list" data-food-feelings='<%- JSON.stringify(foodFeelingTags || []) %>'></div>
+      <div class="home-food-feelings-cloud" id="food-feelings-list" data-food-feelings='<%- JSON.stringify(foodFeelingTags || []) %>'></div>
+      <div class="home-food-feelings-actions">
+        <a class="button button--secondary" href="/feelings?availability=open&mode=vibe">It's more the vibe...</a>
+      </div>
     </section>
   </div>
 

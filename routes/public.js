@@ -5,6 +5,7 @@ const {
   STATUS_VALUES,
   getHomePreviewData,
   getPublicPlaceBySlug,
+  listFeelingPlaces,
   listMapPlaces,
   listNearbyPlaces,
   listPlanPlaces,
@@ -26,11 +27,19 @@ router.get("/", async (req, res, next) => {
     const now = new Date();
     const defaultPlanMeal = now.getHours() < 11 ? "breakfast" : now.getHours() < 17 ? "lunch" : "dinner";
     const defaultNearbyMeal = "open";
-    const [availableTags, topSuburbs] = await Promise.all([
+    const [availableTags, topSuburbs, { places: feelingPlaces }] = await Promise.all([
       listPublicTags(),
-      listTopSuburbs(3)
+      listTopSuburbs(3),
+      listFeelingPlaces({ availability: "open" })
     ]);
     const menuTagGroup = getGroupedTags(availableTags).find((group) => group.key === "menu_items") || null;
+    const openMenuTagSlugs = new Set(
+      feelingPlaces
+        .filter((place) => place.availabilityByMode?.open)
+        .flatMap((place) => (place.tags || [])
+          .filter((tag) => tag.tag_group === "menu_items")
+          .map((tag) => tag.slug))
+    );
 
     res.render("home", {
       defaultPlanDay: new Date().getDay(),
@@ -38,7 +47,9 @@ router.get("/", async (req, res, next) => {
       defaultPlanTime: `${String(new Date().getHours()).padStart(2, "0")}:${String(new Date().getMinutes()).padStart(2, "0")}`,
       defaultNearbyMeal,
       extraHead: MAP_EXTRA_HEAD,
-      foodFeelingTags: menuTagGroup ? menuTagGroup.tags : [],
+      foodFeelingTags: menuTagGroup
+        ? menuTagGroup.tags.filter((tag) => openMenuTagSlugs.has(tag.slug))
+        : [],
       mapAvailabilityValues: MAP_AVAILABILITY_VALUES,
       pageTitle: "Gluten Avoider",
       topSuburbs
@@ -191,20 +202,22 @@ router.get("/nearby", async (req, res, next) => {
 
 router.get("/feelings", async (req, res, next) => {
   try {
-    const [{ places }, availableTags] = await Promise.all([
-      listPlanPlaces({}),
+    const [{ filters, places }, availableTags] = await Promise.all([
+      listFeelingPlaces(req.query),
       listPublicTags()
     ]);
     const groupedTags = getGroupedTags(availableTags);
     const categoryTagGroup = groupedTags.find((group) => group.key === "category") || null;
     const menuTagGroup = groupedTags.find((group) => group.key === "menu_items") || null;
-    const feelingPlaces = places.filter((place) => (place.tags || []).some((tag) => tag.tag_group === "menu_items"));
 
     res.render("feelings", {
       categoryTagGroup,
+      feelingsAvailability: filters.availability,
       foodFeelingTags: menuTagGroup ? menuTagGroup.tags : [],
+      initialFoodSlug: typeof req.query.food === "string" ? req.query.food.trim() : "",
+      initialMode: req.query.mode === "vibe" ? "vibe" : "food",
       pageTitle: "Food feelings",
-      places: feelingPlaces
+      places
     });
   } catch (error) {
     next(error);

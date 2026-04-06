@@ -8,9 +8,36 @@ async function initializeDatabase() {
   const schemaSql = fs.readFileSync(schemaPath, "utf8");
 
   await exec(schemaSql);
+  await ensureInstagramUrlColumn();
   await ensureTagGroupColumn();
   await normalizeTagMetadata();
   await ensureOpeningHoursSchema();
+}
+
+function ensureInstagramUrlColumn() {
+  return new Promise((resolve, reject) => {
+    getDb().all(`PRAGMA table_info(places)`, async (error, columns) => {
+      if (error) {
+        reject(error);
+        return;
+      }
+
+      const hasInstagramUrl = columns.some((column) => column.name === "instagram_url");
+
+      try {
+        if (!hasInstagramUrl) {
+          await exec(
+            `ALTER TABLE places
+             ADD COLUMN instagram_url TEXT DEFAULT ''`
+          );
+        }
+
+        resolve();
+      } catch (migrationError) {
+        reject(migrationError);
+      }
+    });
+  });
 }
 
 function ensureTagGroupColumn() {

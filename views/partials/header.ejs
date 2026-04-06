@@ -26,10 +26,10 @@
           <p class="site-tagline">Let's get you fed</p>
         </div>
         <nav class="site-nav">
-          <a class="site-nav__link <%= currentNav === "home" ? "site-nav__link--active" : "" %>" href="/" <%= currentNav === "home" ? 'aria-current="page"' : "" %>><span class="module-icon module-icon--paper"></span><span class="site-nav__label">Home</span></a>
-          <a class="site-nav__link <%= currentNav === "nearby" ? "site-nav__link--active" : "" %>" href="/nearby" <%= currentNav === "nearby" ? 'aria-current="page"' : "" %>><span class="module-icon module-icon--pink"></span><span class="site-nav__label">Nearby now</span></a>
-          <a class="site-nav__link <%= currentNav === "map" ? "site-nav__link--active" : "" %>" href="/map/view" <%= currentNav === "map" ? 'aria-current="page"' : "" %>><span class="module-icon module-icon--mint"></span><span class="site-nav__label">Map view</span></a>
-          <a class="site-nav__link <%= currentNav === "feelings" ? "site-nav__link--active" : "" %>" href="/feelings" <%= currentNav === "feelings" ? 'aria-current="page"' : "" %>><span class="module-icon module-icon--peach"></span><span class="site-nav__label">Food feelings</span></a>
+          <a class="site-nav__link <%= currentNav === "home" ? "site-nav__link--active" : "" %>" href="/" <%= currentNav === "home" ? 'aria-current="page"' : "" %>><span class="module-icon module-icon--paper"></span><span class="site-nav__label site-nav__label--full">Home</span><span class="site-nav__label site-nav__label--short">Home</span></a>
+          <a class="site-nav__link <%= currentNav === "nearby" ? "site-nav__link--active" : "" %>" href="/nearby" <%= currentNav === "nearby" ? 'aria-current="page"' : "" %>><span class="module-icon module-icon--pink"></span><span class="site-nav__label site-nav__label--full">Nearby now</span><span class="site-nav__label site-nav__label--short">Now</span></a>
+          <a class="site-nav__link <%= currentNav === "map" ? "site-nav__link--active" : "" %>" href="/map/view" <%= currentNav === "map" ? 'aria-current="page"' : "" %>><span class="module-icon module-icon--mint"></span><span class="site-nav__label site-nav__label--full">Map view</span><span class="site-nav__label site-nav__label--short">Map</span></a>
+          <a class="site-nav__link <%= currentNav === "feelings" ? "site-nav__link--active" : "" %>" href="/feelings" <%= currentNav === "feelings" ? 'aria-current="page"' : "" %>><span class="module-icon module-icon--peach"></span><span class="site-nav__label site-nav__label--full">Food feelings</span><span class="site-nav__label site-nav__label--short">#FF</span></a>
         </nav>
         <a class="site-admin-link" href="<%= currentAdmin ? "/admin" : "/admin/login" %>" aria-label="<%= currentAdmin ? "Admin" : "Login" %>">
           <span class="site-admin-link__icon" aria-hidden="true"></span>

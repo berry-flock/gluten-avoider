@@ -7,6 +7,7 @@ CREATE TABLE IF NOT EXISTS places (
   latitude REAL NOT NULL,
   longitude REAL NOT NULL,
   website_url TEXT DEFAULT '',
+  instagram_url TEXT DEFAULT '',
   google_maps_url TEXT DEFAULT '',
   status TEXT NOT NULL CHECK (status IN ('trusted', 'want_to_try', 'avoid')),
   gf_confidence TEXT NOT NULL CHECK (gf_confidence IN ('strong', 'partial', 'uncertain', 'unknown')),

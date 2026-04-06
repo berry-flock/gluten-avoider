@@ -57,6 +57,12 @@
     </section>
   <% } %>
 
+  <% if (place.instagram_url) { %>
+    <section class="detail-block detail-block--menu-link">
+      <a class="button button--secondary" href="<%= place.instagram_url %>" target="_blank" rel="noreferrer">Instagram</a>
+    </section>
+  <% } %>
+
   <% if (place.openingHours && place.openingHours.length) { %>
     <section class="detail-block">
       <h2>Opening hours</h2>

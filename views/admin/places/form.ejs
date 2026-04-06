@@ -141,6 +141,12 @@
               <% if (errors.website_url) { %><span class="field-error"><%= errors.website_url %></span><% } %>
             </label>
 
+            <label>
+              Instagram URL
+              <input type="text" name="instagram_url" value="<%= formData.instagram_url %>" placeholder="https://instagram.com/..." />
+              <% if (errors.instagram_url) { %><span class="field-error"><%= errors.instagram_url %></span><% } %>
+            </label>
+
             <div class="form-grid__full geo-panel">
               <div class="geo-panel__copy">
                 <strong>Coordinates</strong>

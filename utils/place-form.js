@@ -17,6 +17,7 @@ function buildPlaceFormData(place = {}) {
     featured: Boolean(place.featured),
     gf_confidence: place.gf_confidence || "unknown",
     google_maps_url: place.google_maps_url || "",
+    instagram_url: place.instagram_url || "",
     is_public: place.is_public !== undefined ? Boolean(place.is_public) : true,
     latitude: place.latitude !== undefined && place.latitude !== null ? String(place.latitude) : "",
     longitude: place.longitude !== undefined && place.longitude !== null ? String(place.longitude) : "",
@@ -46,6 +47,7 @@ function parsePlaceForm(body) {
     featured: body.featured === "1",
     gf_confidence: "unknown",
     google_maps_url: "",
+    instagram_url: String(body.instagram_url || "").trim(),
     is_public: body.is_public === "1",
     latitude: String(body.latitude || "").trim(),
     longitude: String(body.longitude || "").trim(),
@@ -88,6 +90,10 @@ function validatePlaceForm(formData) {
     errors.website_url = "Menu URL must start with http:// or https://";
   }
 
+  if (formData.instagram_url && !isValidHttpUrl(formData.instagram_url)) {
+    errors.instagram_url = "Instagram URL must start with http:// or https://";
+  }
+
   const parsedOpeningHours = parseOpeningHoursText(formData.opening_hours_text);
 
   if (parsedOpeningHours.error) {
@@ -105,6 +111,7 @@ function preparePlaceForSave(formData) {
     ...formData,
     gf_confidence: formData.gf_confidence || "unknown",
     google_maps_url: formData.google_maps_url || "",
+    instagram_url: formData.instagram_url || "",
     latitude: formData.latitude ? Number(formData.latitude) : "",
     longitude: formData.longitude ? Number(formData.longitude) : "",
     opening_hours: normalizeOpeningHours(formData.opening_hours || [])

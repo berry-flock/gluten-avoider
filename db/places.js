@@ -154,6 +154,68 @@ async function listPlanPlaces(rawQuery = {}) {
   };
 }
 
+async function listFeelingPlaces(rawQuery = {}) {
+  const availability = MAP_AVAILABILITY_VALUES.includes(rawQuery.availability)
+    ? rawQuery.availability
+    : "open";
+  const location = normalizeLocation(rawQuery);
+  const openFilters = normalizeMapFilters({ availability: "open" });
+  const lunchFilters = normalizeMapFilters({ availability: "lunch" });
+  const dinnerFilters = normalizeMapFilters({ availability: "dinner" });
+  const places = await queryPublicPlaces({
+    featuredOnly: false,
+    gfConfidence: "",
+    openNow: false,
+    search: "",
+    sort: "recommended",
+    status: "",
+    tags: []
+  }, getOrderByClause("recommended"));
+
+  await attachTags(places);
+  await attachOpeningHours(places);
+
+  const feelingPlaces = places
+    .filter((place) => (place.tags || []).some((tag) => tag.tag_group === "menu_items"))
+    .map((place, index) => {
+      const availabilityByMode = {
+        open: matchesMapAvailabilityMode(place.openingHours, openFilters),
+        lunch: matchesMapAvailabilityMode(place.openingHours, lunchFilters),
+        dinner: matchesMapAvailabilityMode(place.openingHours, dinnerFilters)
+      };
+      const summaryByMode = {
+        open: place.openSummary || null,
+        lunch: getOpenSummaryForSelection(place.openingHours, lunchFilters.day, lunchFilters.previewTimeMinutes, { prefix: "Open for lunch" }),
+        dinner: getOpenSummaryForSelection(place.openingHours, dinnerFilters.day, dinnerFilters.previewTimeMinutes, { prefix: "Open for dinner" })
+      };
+      const distanceKm = location.hasCoordinates && hasCoordinates(place)
+        ? haversineDistanceKm(
+          location.latitude,
+          location.longitude,
+          Number(place.latitude),
+          Number(place.longitude)
+        )
+        : null;
+
+      return {
+        ...place,
+        availabilityByMode,
+        distance_km: distanceKm,
+        selectedAvailability: summaryByMode[availability],
+        sort_index: index,
+        summaryByMode
+      };
+    });
+
+  return {
+    filters: {
+      availability
+    },
+    location,
+    places: feelingPlaces
+  };
+}
+
 async function getHomePreviewData(rawQuery = {}) {
   const location = normalizeLocation(rawQuery);
   const mapFilters = normalizeMapFilters(rawQuery);
@@ -756,6 +818,7 @@ module.exports = {
   PLAN_STATUS_VALUES,
   getHomePreviewData,
   getHomepageData,
+  listFeelingPlaces,
   listMapPlaces,
   listPlanPlaces,
   listTopSuburbs,

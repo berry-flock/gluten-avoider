@@ -1,47 +1,49 @@
 <%- include("partials/header") %>
 
-<section class="section-block feelings-hero">
-  <div class="section-heading section-heading--roomy">
-    <div>
-      <p class="eyebrow">Food feelings</p>
-      <h1><span class="module-icon module-icon--peach"></span>What are you in the mood for?</h1>
-      <p class="section-copy">Tap whatever sounds good, reshuffle when you're blank, and use occasion tags to tighten the vibe.</p>
-    </div>
-    <div class="feelings-hero__actions">
-      <button class="button" type="button" id="feelings-refresh">Refresh cravings</button>
-      <a class="button button--secondary" href="/plan">Open full planner</a>
-    </div>
+<section class="section-block feelings-panel" id="feelings-panel">
+  <div class="feelings-pillbox-wrap">
+    <h1 class="feelings-pillbox"><span class="module-icon module-icon--peach"></span>Food Feelings</h1>
   </div>
 
-  <div class="feelings-stage">
+  <div class="filters-actions nearby-meal-switcher feelings-availability-switcher">
+    <button class="button <%= feelingsAvailability === "open" ? "" : "button--secondary" %>" type="button" data-feelings-availability="open">Open</button>
+    <button class="button <%= feelingsAvailability === "lunch" ? "" : "button--secondary" %>" type="button" data-feelings-availability="lunch">Lunch</button>
+    <button class="button <%= feelingsAvailability === "dinner" ? "" : "button--secondary" %>" type="button" data-feelings-availability="dinner">Dinner</button>
+  </div>
+
+  <div class="feelings-stage" id="feelings-stage">
     <div class="feelings-stage__orb" aria-hidden="true"></div>
     <div class="feelings-stage__chips" id="feelings-menu-tags"></div>
   </div>
+
+  <div class="feelings-stage__actions">
+    <button class="button" type="button" id="feelings-refresh">SHUFFLE</button>
+    <button class="button button--secondary" type="button" id="feelings-vibe-toggle">It's more the vibe...</button>
+  </div>
+
+  <div id="feelings-results-slot-food"></div>
 </section>
 
-<section class="section-block feelings-refine">
+<section class="section-block feelings-vibe-panel">
   <div class="section-heading">
     <div>
-      <h2>Refine the vibe</h2>
-      <p class="section-copy">Optional, but helpful when you know the mood more than the meal.</p>
+      <h2>Vibe selector</h2>
     </div>
-    <button class="button button--secondary" type="button" id="feelings-clear">Clear selections</button>
   </div>
 
   <% if (categoryTagGroup && categoryTagGroup.tags.length) { %>
-    <div class="tag-row feelings-occasion-tags" id="feelings-occasion-tags">
-      <% categoryTagGroup.tags.forEach((tag) => { %>
-        <button class="occasion-chip occasion-chip--toggle" type="button" data-feelings-occasion="<%= tag.slug %>"><%= tag.name %></button>
-      <% }) %>
-    </div>
+    <div class="tag-row feelings-vibe-tags" id="feelings-occasion-tags"></div>
+    <p class="empty-state feelings-vibe-empty" id="feelings-vibe-empty" hidden>No vibe tags match this food feeling right now.</p>
   <% } %>
+
+  <div id="feelings-results-slot-vibe"></div>
 </section>
 
-<section class="section-block">
+<section class="feelings-results-block" id="feelings-results-block">
   <div class="section-heading section-heading--roomy">
     <div>
-      <h2><span id="feelings-results-count"><%= places.length %></span> ideas</h2>
-      <p class="section-copy" id="feelings-results-copy">A mix of places to get you out of the “I don’t know” zone.</p>
+      <h2><span id="feelings-results-count"><%= places.length %></span> restaurants</h2>
+      <p class="section-copy" id="feelings-results-copy">Pick a craving, or skip straight to the vibe.</p>
     </div>
   </div>
 
@@ -49,6 +51,9 @@
 </section>
 
 <script id="feelings-data" type="application/json"><%- JSON.stringify({
+  initialAvailability: feelingsAvailability,
+  initialFoodSlug,
+  initialMode,
   menuTags: (foodFeelingTags || []).map((tag) => ({
     name: tag.name,
     slug: tag.slug
@@ -66,11 +71,15 @@
     occasionTags: (place.tags || [])
       .filter((tag) => tag.tag_group === "category")
       .map((tag) => ({ name: tag.name, slug: tag.slug })),
-    openSummary: place.openSummary || null,
+    availabilityByMode: place.availabilityByMode || { open: false, lunch: false, dinner: false },
+    latitude: place.latitude === null || place.latitude === "" ? null : Number(place.latitude),
+    longitude: place.longitude === null || place.longitude === "" ? null : Number(place.longitude),
     slug: place.slug,
-    suburb: place.suburb || ""
+    sortIndex: place.sort_index || 0,
+    suburb: place.suburb || "",
+    summaryByMode: place.summaryByMode || {}
   }))
 }) %></script>
-<script src="/feelings.js"></script>
+<script src="/feelings.js?v=20260406-1"></script>
 
 <%- include("partials/footer") %>

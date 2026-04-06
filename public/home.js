@@ -274,8 +274,13 @@ function renderFoodFeelings() {
   const tags = JSON.parse(foodFeelingsElement.dataset.foodFeelings || "[]");
   const shuffled = [...tags].sort(() => Math.random() - 0.5).slice(0, 10);
 
+  if (!shuffled.length) {
+    foodFeelingsElement.innerHTML = `<p class="empty-state">Nothing open is jumping out right now.</p>`;
+    return;
+  }
+
   foodFeelingsElement.innerHTML = shuffled.map((tag) => (
-    `<a class="menu-chip menu-chip--link" href="/plan?tags=${encodeURIComponent(tag.slug)}&meal=open">${escapeHtml(tag.name)}</a>`
+    `<a class="feelings-tag feelings-tag--compact" href="/feelings?availability=open&food=${encodeURIComponent(tag.slug)}">${escapeHtml(tag.name)}</a>`
   )).join("");
 }
 
