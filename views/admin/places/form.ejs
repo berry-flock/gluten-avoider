@@ -48,7 +48,7 @@
             class="tag-picker"
             data-group-key="<%= group.key %>"
             data-tag-limit="3"
-            data-existing-tags='<%- JSON.stringify(group.tags.map((tag) => ({ id: String(tag.id), name: tag.name }))) %>'
+            data-existing-tags='<%- jsonForHtml(group.tags.map((tag) => ({ id: String(tag.id), name: tag.name }))) %>'
           >
             <legend><%= group.label %></legend>
             <p class="section-copy"><%= group.question %></p>

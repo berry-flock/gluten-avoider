@@ -71,7 +71,7 @@
 
 <% if (location.hasCoordinates) { %>
   <script src="/leaflet.js?v=<%= assetVersion %>"></script>
-  <script id="nearby-map-data" type="application/json"><%- JSON.stringify({
+  <script id="nearby-map-data" type="application/json"><%- jsonForHtml({
     userLocation: {
       lat: location.latitude,
       lng: location.longitude

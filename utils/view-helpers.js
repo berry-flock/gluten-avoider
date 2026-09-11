@@ -14,6 +14,23 @@ function installViewHelpers(app) {
   app.locals.hasSelectedTag = hasSelectedTag;
   app.locals.isOpenNowClass = isOpenNowClass;
   app.locals.tagsByGroup = tagsByGroup;
+  app.locals.jsonForHtml = jsonForHtml;
+}
+
+// Serialises a value for embedding in a single-quoted HTML attribute or a
+// <script> block. JSON.stringify escapes double quotes but leaves "<" and "'"
+// alone, so a name like "Nonna's" or a note containing "</script>" would
+// otherwise terminate the attribute or the script element early. Only
+// characters that appear inside JSON string values are escaped, so the result
+// still parses with JSON.parse.
+function jsonForHtml(value) {
+  return JSON.stringify(value === undefined ? null : value)
+    .replace(/</g, "\\u003c")
+    .replace(/>/g, "\\u003e")
+    .replace(/&/g, "\\u0026")
+    .replace(/'/g, "\\u0027")
+    .replace(/\u2028/g, "\\u2028")
+    .replace(/\u2029/g, "\\u2029");
 }
 
 function formatStatus(status) {

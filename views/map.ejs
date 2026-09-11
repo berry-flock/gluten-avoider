@@ -52,7 +52,7 @@
 </section>
 
 <script src="/leaflet.js?v=<%= assetVersion %>"></script>
-<script id="map-view-data" type="application/json"><%- JSON.stringify({
+<script id="map-view-data" type="application/json"><%- jsonForHtml({
   location: {
     hasCoordinates: location.hasCoordinates,
     lat: location.latitude,
